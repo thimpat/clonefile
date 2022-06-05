@@ -92,9 +92,11 @@ const init = () =>
     {
         let source = "";
         source = argv.source;
+
         if (!source && argv._ && argv._.length)
         {
             source = argv._[0];
+            argv._ = argv._.slice(1);
         }
 
         if (!argv.hasOwnProperty("overwrite"))
@@ -127,11 +129,7 @@ const init = () =>
 
         let filename = path.parse(source).base;
 
-        let targets = [];
-        if (argv._.length > 1)
-        {
-            targets = argv._.slice(1);
-        }
+        let targets = argv._ || [];
 
         if (argv.target)
         {
