@@ -1,20 +1,36 @@
+#!/usr/bin/env node
+
 const fs = require("fs");
 const path = require("path");
 const toAnsi = require("to-ansi");
+const minimist = require("minimist");
 
-const argv = require("minimist")(process.argv.slice(2));
+const argv = minimist(process.argv.slice(2));
 
 const method = fs.copyFileSync ? "new" : "stream";
 
+if (!argv.hasOwnProperty("verbose"))
+{
+    argv.verbose = true;
+}
+
+if (["false", "no", "nada", "non"].includes(argv.verbose))
+{
+    argv.verbose = false;
+}
 
 const displayLog = (message, style = {fg: "yellow"}) =>
 {
+    if (!argv.verbose)
+    {
+        return;
+    }
     console.log(toAnsi.getTextFromColor(message, style));
 };
 
-const displayError = (message) =>
+const displayError = (message, style = {fg: "red"}) =>
 {
-    console.error(toAnsi.getTextFromColor(message, {fg: "red"}));
+    console.error(toAnsi.getTextFromColor("Error: " + message, style));
 };
 
 

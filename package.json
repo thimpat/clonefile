@@ -2,9 +2,14 @@
   "name": "clonefile",
   "version": "1.0.0",
   "description": "Clone file and rename",
-  "main": "index.cjs",
+  "main": "./index.cjs",
+  "bin": {
+    "clonefile": "index.cjs"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:esm": "to-esm index.cjs --update-all --nm local_nm",
+    "demo1": "node index.cjs my-file1.txt file-2.md somewhere/else/ttt.txt somewhere1/ my-dir/ --target simple.txt --recursive"
   },
   "keywords": [
     "productivity",
@@ -13,11 +18,16 @@
   "author": "Patrice Thimothee",
   "license": "MIT",
   "devDependencies": {
-    "eslint": "^8.17.0"
+    "eslint": "^8.17.0",
+    "to-esm": "file:../to-esm"
   },
   "dependencies": {
     "fs-extra": "^10.1.0",
     "minimist": "^1.2.6",
     "to-ansi": "^1.4.3"
+  },
+  "type": "commonjs",
+  "exports": {
+    "require": "./index.cjs"
   }
 }
