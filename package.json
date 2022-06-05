@@ -1,14 +1,13 @@
 {
   "name": "clonefile",
   "version": "1.0.0",
-  "description": "Clone file and rename",
+  "description": "Clone file into multiple locations",
   "main": "./index.cjs",
   "bin": {
     "clonefile": "index.cjs"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:esm": "to-esm index.cjs --update-all --nm local_nm",
     "demo1": "node index.cjs my-file1.txt file-2.md somewhere/else/ttt.txt somewhere1/ my-dir/ --target simple.txt --recursive"
   },
   "keywords": [
@@ -18,8 +17,7 @@
   "author": "Patrice Thimothee",
   "license": "MIT",
   "devDependencies": {
-    "eslint": "^8.17.0",
-    "to-esm": "file:../to-esm"
+    "eslint": "^8.17.0"
   },
   "dependencies": {
     "fs-extra": "^10.1.0",
