@@ -85,3 +85,7 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+/somewhere/
+/somewhere1/
+/file-2.md
+/my-dir/

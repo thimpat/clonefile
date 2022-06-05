@@ -1,0 +1,23 @@
+{
+  "name": "clonefile",
+  "version": "1.0.0",
+  "description": "Clone file and rename",
+  "main": "index.cjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "productivity",
+    "ci"
+  ],
+  "author": "Patrice Thimothee",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.17.0"
+  },
+  "dependencies": {
+    "fs-extra": "^10.1.0",
+    "minimist": "^1.2.6",
+    "to-ansi": "^1.4.3"
+  }
+}
