@@ -34,31 +34,45 @@ $> clonefile --source license.txt --target license.md
 
 <br/>
 
-#### Clone file into directory
+#### Clone a file into directory
 
 ```shell
+# Copy license.txt into my-dest-dir
 $> clonefile license.txt my-dest-dir  
 ```
 
 <br/>
 
-#### Clone file to multiple locations
+#### Clone a file to multiple locations
 
 ```shell
+# Copy license.txt into my-file-target-1 (file), my-file-target-2 (file) and within (my-dest-dir-1/) (directory)
 $> clonefile license.txt my-file-target-1 my-file-target-2 my-dest-dir-1/   
 ```
 
 <br/>
 
+#### Clone a directory in multiple directories
+
+```shell
+$> clonefile --force license.txt my-dest-dir-1 my-dest-dir-2 my-dest-dir-3  
+```
+
+> The --force option is required for cloning a directory 
+
+<br/>
+
+
 ## Options
 
 
-| **Options** | **default** | **Expect**  | **Description**                          | 
-|-------------|-------------|-------------|------------------------------------------|
-| overwrite   | true        | boolean     | _Whether to overwrite destination_       |
-| recursive   | false       | boolean     | _create target directories if necessary_ |
-| silent      | false       | boolean     | _Whether to display messages_            |
-| ~~verbose~~ | ~~true~~    | ~~boolean~~ | ~~_display errors + messages_~~          |
+| **Options**   | **default** | **Expect**  | **Description**                          | 
+|---------------|-------------|-------------|------------------------------------------|
+| --overwrite   | true        | boolean     | _Whether to overwrite destination_       |
+| --recursive   | false       | boolean     | _create target directories if necessary_ |
+| --silent      | false       | boolean     | _Whether to display messages_            |
+| ~~--verbose~~ | ~~true~~    | ~~boolean~~ | ~~_display errors + messages_~~          |
+| --force       | false       | boolean     | _To allow cloning a directory_           |
 
 
 
