@@ -38,7 +38,7 @@ $> clonefile --source license.txt --target license.md
 
 ```shell
 # Copy license.txt into my-dest-dir
-$> clonefile license.txt my-dest-dir  
+$> clonefile license.txt my-dest-dir/  
 ```
 
 <br/>
@@ -55,10 +55,18 @@ $> clonefile license.txt my-file-target-1 my-file-target-2 my-dest-dir-1/
 #### Clone a directory in multiple directories
 
 ```shell
-$> clonefile --force license.txt my-dest-dir-1 my-dest-dir-2 my-dest-dir-3  
+$> clonefile --force license.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/  
 ```
 
-> The --force option is required for cloning a directory 
+---
+
+> The --force option is required for cloning a directory
+
+----
+
+> To help **clonefile** knows whether you want to copy a file to a directory or another file, 
+> always add a trailing slash **"/"** to folders.
+
 
 <br/>
 
