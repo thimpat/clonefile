@@ -53,11 +53,12 @@ $> clonefile license.txt my-file-target-1 my-file-target-2 my-dest-dir-1/
 ## Options
 
 
-| **Options** | **default** | **Expect** | **Description**                          | 
-|-------------|-------------|------------|------------------------------------------|
-| overwrite   | true        | boolean    | _Whether to overwrite destination_       |
-| recursive   | false       | boolean    | _create target directories if necessary_ |
-| verbose     | true        | boolean    | _display errors + messages_              |
+| **Options** | **default** | **Expect**  | **Description**                          | 
+|-------------|-------------|-------------|------------------------------------------|
+| overwrite   | true        | boolean     | _Whether to overwrite destination_       |
+| recursive   | false       | boolean     | _create target directories if necessary_ |
+| silent      | false       | boolean     | _Whether to display messages_            |
+| ~~verbose~~ | ~~true~~    | ~~boolean~~ | ~~_display errors + messages_~~          |
 
 
 
