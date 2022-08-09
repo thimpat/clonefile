@@ -91,27 +91,18 @@ const init = () =>
     try
     {
         let source = "";
+
+        if (argv.hasOwnProperty("verbose"))
+        {
+            displayLog(`The option "--verbose" is deprecated. Use --silent instead`, {fg: "orange"});
+        }
+
         source = argv.source;
 
         if (!source && argv._ && argv._.length)
         {
             source = argv._[0];
             argv._ = argv._.slice(1);
-        }
-
-        if (!argv.hasOwnProperty("overwrite"))
-        {
-            argv.overwrite = true;
-        }
-
-        if (["false", "no", "nada", "non"].includes(argv.overwrite))
-        {
-            argv.overwrite = false;
-        }
-
-        if (["false", "no", "nada", "non"].includes(argv.recursive))
-        {
-            argv.recursive = false;
         }
 
         if (!source)
@@ -123,7 +114,7 @@ const init = () =>
         source = resolvePath(source);
         if (!isFileExist(source))
         {
-            displayError(`The file "${source}" does not exist or is invalid`);
+            displayError(`The source file "${source}" does not exist, is inaccessible or is invalid`);
             process.exit(1);
         }
 
@@ -149,6 +140,7 @@ const init = () =>
             process.exit(1);
         }
 
+        let errorFounds = 0;
         let count = 0;
         const n = targets.length;
         for (let i = 0; i < n; ++i)
@@ -184,6 +176,7 @@ const init = () =>
 
                 if (resolvePath(source) === resolvePath(target))
                 {
+                    ++errorFounds;
                     displayError(`Cannot clone source into itself: ${target}`);
                     continue;
                 }
@@ -199,8 +192,15 @@ const init = () =>
 
         if (!count)
         {
-            displayError(toAnsi.getTextFromColor(`No file copied`, {fg: "red"}));
-            process.exit(1);
+
+            if (errorFounds)
+            {
+                displayError(toAnsi.getTextFromColor(`No file copied`, {fg: "red"}));
+                process.exit(1);
+            }
+
+            displayLog(`No file copied`, {fg: "gray"});
+            process.exit(0);
         }
 
         const message = `${count} file${count === 1 ? "":"s"} cloned`;
