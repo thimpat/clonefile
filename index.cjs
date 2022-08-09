@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-const fs = require("fs");
+const fs = require("fs-extra");
 const path = require("path");
 const toAnsi = require("to-ansi");
 const minimist = require("minimist");
 
-const argv = minimist(process.argv.slice(2), {boolean: ["recursive", "overwrite", "silent"]});
+const argv = minimist(process.argv.slice(2), {boolean: ["recursive", "overwrite", "silent", "force"]});
 
 const method = fs.copyFileSync ? "new" : "stream";
 
@@ -39,34 +39,69 @@ const resolvePath = (filepath) =>
 
 const copyFile = (source, dest, isRecursive) =>
 {
-    const dir = path.parse(dest).dir;
-    if (dir && !fs.existsSync(dir) && isRecursive)
+    try
     {
-        fs.mkdirSync(dir, {recursive: true});
-    }
+        const dir = path.parse(dest).dir;
+        if (dir && !fs.existsSync(dir) && isRecursive)
+        {
+            fs.mkdirSync(dir, {recursive: true});
+        }
 
-    if (method === "stream")
-    {
-        fs.createReadStream(source).pipe(fs.createWriteStream(dest));
-    }
-    else
-    {
-        fs.copyFileSync(source, dest, fs.constants.F_OK);
-    }
+        if (method === "stream")
+        {
+            fs.createReadStream(source).pipe(fs.createWriteStream(dest));
+        }
+        else
+        {
+            fs.copyFileSync(source, dest, fs.constants.F_OK);
+        }
 
-    displayLog(`${source} => ${dest}`, {fg: "yellow"});
+        displayLog(`${source} => ${dest}`, {fg: "yellow"});
+    }
+    catch (e)
+    {
+        console.error(e.message);
+    }
 };
 
-const isFileExist = (source) =>
+const copyFolder = (source, dest) =>
 {
     try
     {
+        fs.copySync(source, dest, {overwrite: true}, function (err)
+        {
+            if (err)
+            {
+                console.error(err.message);
+                return;
+            }
+
+            displayLog(`${source} => ${dest}`, {fg: "green"});
+        });
+    }
+    catch (e)
+    {
+        console.error({lid: 1000}, e.message);
+    }
+
+};
+
+const getEntityStatus = (source) =>
+{
+    try
+    {
+        const res = {};
         if (!fs.existsSync(source))
         {
-            return false;
+            res.exists = false;
+            return res;
         }
 
-        return (fs.lstatSync(source).isFile());
+        res.exists = true;
+        const stats = fs.lstatSync(source);
+        res.file = stats.isFile();
+        res.dir = stats.isDirectory();
+        return res;
     }
     catch (e)
     {
@@ -97,19 +132,30 @@ const init = () =>
 
         if (!source)
         {
-            displayError(`No source found`);
+            displayError(`No source detected in arguments`);
             process.exit(1);
         }
 
         source = resolvePath(source);
-        if (!isFileExist(source))
+
+        const sourceStatus = getEntityStatus(source);
+        if (!sourceStatus.exists)
         {
             displayError(`The source file "${source}" does not exist, is inaccessible or is invalid`);
             process.exit(1);
         }
 
+        if (!(sourceStatus.file || sourceStatus.dir))
+        {
+            displayError(`The source file "${source}" is not a file/directory`);
+            process.exit(2);
+        }
+
         let filename = path.parse(source).base;
 
+        // --------------------
+        // Determine targets folders and files
+        // --------------------
         let targets = argv._ || [];
 
         if (argv.target)
@@ -130,6 +176,9 @@ const init = () =>
             process.exit(1);
         }
 
+        // --------------------
+        // Start cloning
+        // --------------------
         let errorFounds = 0;
         let count = 0;
         const n = targets.length;
@@ -138,8 +187,6 @@ const init = () =>
             let target = targets[i];
             try
             {
-                let alreadyExists = false;
-                let isDirectory = false;
                 target = normalisePath(targets[i]);
 
                 if (target.endsWith("/"))
@@ -147,23 +194,7 @@ const init = () =>
                     target = resolvePath(path.join(target, filename));
                 }
 
-                if (fs.existsSync(target))
-                {
-                    alreadyExists = true;
-                    isDirectory = (fs.lstatSync(target).isDirectory());
-                    if (isDirectory)
-                    {
-                        target = resolvePath(path.join(target, filename));
-                        alreadyExists = fs.existsSync(target);
-                    }
-                }
-
-                if (alreadyExists && !argv.overwrite)
-                {
-                    displayLog(`The destination "${target}" already exists. Skipping`, {fg: "gray"});
-                    continue;
-                }
-
+                // Source and destination are the same
                 if (resolvePath(source) === resolvePath(target))
                 {
                     ++errorFounds;
@@ -171,7 +202,42 @@ const init = () =>
                     continue;
                 }
 
-                copyFile(source, target, argv.recursive);
+                const targetStatus = getEntityStatus(target);
+
+                // Destination exists already
+                if (targetStatus.exists && !argv.overwrite)
+                {
+                    displayLog(`The destination "${target}" already exists. Skipping`, {fg: "gray"});
+                    continue;
+                }
+
+                // Destination is a folder
+                if (targetStatus.dir)
+                {
+                    target = resolvePath(path.join(target, filename));
+                }
+
+                if (sourceStatus.file)
+                {
+                    copyFile(source, target, argv.recursive);
+                }
+                else
+                {
+                    if (targetStatus.file)
+                    {
+                        displayError(`You cannot clone a directory [${source}] into an existing file [${target}].`);
+                        ++errorFounds;
+                        continue;
+                    }
+
+                    if (!argv.force)
+                    {
+                        displayLog(`To clone the directory [${source}], you must pass the --force option. Skipping`, {fg: "gray"});
+                        continue;
+                    }
+
+                    copyFolder(source, target, argv.recursive);
+                }
                 ++count;
             }
             catch (e)
@@ -185,7 +251,7 @@ const init = () =>
 
             if (errorFounds)
             {
-                displayError(toAnsi.getTextFromColor(`No file copied`, {fg: "red"}));
+                displayError(toAnsi.getTextFromColor(`${errorFounds} ${errorFounds === 1 ? "issue" : "issues"} detected`, {fg: "red"}));
                 process.exit(1);
             }
 
@@ -193,7 +259,7 @@ const init = () =>
             process.exit(0);
         }
 
-        const message = `${count} file${count === 1 ? "":"s"} cloned`;
+        const message = `${count} ${count === 1 ? "item" : "items"} cloned`;
         displayLog(``.padEnd(message.length, "-"), {fg: "orange"});
         displayLog(message, {fg: "orange"});
 
