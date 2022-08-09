@@ -122,6 +122,12 @@ const init = () =>
             displayLog(`The option "--verbose" is deprecated. Use --silent instead`, {fg: "orange"});
         }
 
+        if (argv.force)
+        {
+            argv.recursive = true;
+            argv.overwrite = true;
+        }
+
         source = argv.source;
 
         if (!source && argv._ && argv._.length)
