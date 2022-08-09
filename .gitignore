@@ -90,3 +90,8 @@ dist
 /file-2.md
 /my-dir/
 /simple.txt
+.idea/
+my-cool-dir*
+.eslintrc.cjs
+file-1.txt
+my-file1.txt
