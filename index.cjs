@@ -5,23 +5,13 @@ const path = require("path");
 const toAnsi = require("to-ansi");
 const minimist = require("minimist");
 
-const argv = minimist(process.argv.slice(2));
+const argv = minimist(process.argv.slice(2), {boolean: ["recursive", "overwrite", "silent"]});
 
 const method = fs.copyFileSync ? "new" : "stream";
 
-if (!argv.hasOwnProperty("verbose"))
-{
-    argv.verbose = true;
-}
-
-if (["false", "no", "nada", "non"].includes(argv.verbose))
-{
-    argv.verbose = false;
-}
-
 const displayLog = (message, style = {fg: "yellow"}) =>
 {
-    if (!argv.verbose)
+    if (argv.silent)
     {
         return;
     }
