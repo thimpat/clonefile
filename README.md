@@ -97,13 +97,13 @@ $> clonefile --force --sources *.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3
 
 **_Result_**
 
-> C:/projects/clonefile/somefile1.txt => C:/projects/clonefile/my-dir-1/somefile1.txt
+> >C:/projects/clonefile/somefile1.txt => C:/projects/clonefile/my-dir-1/somefile1.txt
 > C:/projects/clonefile/somefile1.txt => C:/projects/clonefile/my-dir-2/somefile1.txt
 > C:/projects/clonefile/somefile1.txt => C:/projects/clonefile/my-dir-3/somefile1.txt
 > --------------
 > 3 items cloned
 > 
-> C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-1/somefile2.txt
+> >C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-1/somefile2.txt
 > C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-2/somefile2.txt
 > C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-3/somefile2.txt
 > --------------
@@ -119,7 +119,11 @@ $> clonefile --force --sources *.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3
 
 ---
 
-> The --force option is required for cloning a directory
+## Notes
+
+<br/>
+
+> NOTE: The --force option is required for cloning a directory
 
 ----
 
