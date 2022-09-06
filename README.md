@@ -42,7 +42,7 @@ $> clonefile --source license.txt --target license.md
 
 <br/>
 
->> **NOTE:** The source and the target arguments can be omitted
+> **NOTE:** The source and the target arguments can be omitted
 
 <br/>
 
@@ -97,13 +97,13 @@ $> clonefile --force --sources *.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3
 
 **_Result_**
 
->> C:/projects/clonefile/somefile1.txt => C:/projects/clonefile/my-dir-1/somefile1.txt
+> C:/projects/clonefile/somefile1.txt => C:/projects/clonefile/my-dir-1/somefile1.txt
 > C:/projects/clonefile/somefile1.txt => C:/projects/clonefile/my-dir-2/somefile1.txt
 > C:/projects/clonefile/somefile1.txt => C:/projects/clonefile/my-dir-3/somefile1.txt
->> --------------
->> 3 items cloned
+> --------------
+> 3 items cloned
 > 
->> C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-1/somefile2.txt
+> C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-1/somefile2.txt
 > C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-2/somefile2.txt
 > C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-3/somefile2.txt
 > >--------------
@@ -141,6 +141,9 @@ $> clonefile --force --sources *.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3
 | --silent      | false       | boolean     | _Whether to display messages_            |
 | ~~--verbose~~ | ~~true~~    | ~~boolean~~ | ~~_display errors + messages_~~          |
 | --force       | false       | boolean     | _To allow cloning a directory_           |
+| --sources     | ""          | string      | _Pattern to select files to copy_        |
+| --source      | ""          | string      | _File path (not pattern) to copy_        |
+| --target      | ""          | string      | _Destination files or folders_           |
 
 
 
