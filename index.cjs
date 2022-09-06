@@ -2,13 +2,19 @@
 
 const fs = require("fs-extra");
 const path = require("path");
-const toAnsi = require("to-ansi");
+
 const minimist = require("minimist");
 const glob = require("glob");
+
+const toAnsi = require("to-ansi");
+const {showHelp} = require("pageterm");
+const {joinPath} = require("@thimpat/libutils");
 
 const argv = minimist(process.argv.slice(2), {boolean: ["recursive", "overwrite", "silent", "force"]});
 
 const method = fs.copyFileSync ? "new" : "stream";
+
+const packageJson = require("./package.json");
 
 const displayLog = (message, style = {fg: "yellow"}) =>
 {
@@ -17,6 +23,19 @@ const displayLog = (message, style = {fg: "yellow"}) =>
         return;
     }
     console.log(toAnsi.getTextFromColor(message, style));
+};
+
+const displayHelpFile = async function ()
+{
+    const helpPath = joinPath(__dirname, "help.md");
+    const content = fs.readFileSync(helpPath, "utf-8");
+    await showHelp(content, {
+        windowTitle    : `${packageJson.name} v${packageJson.version} - Help ❔`,
+        topText        : "Press CTRL + C or Q to Quit | Page Down or Any key to scroll down",
+        topTextBg      : "",
+        topTextReversed: true,
+        colorify       : true
+    });
 };
 
 const displayError = (message, style = {fg: "red"}) =>
@@ -207,7 +226,7 @@ function cloneToTargets(targets, filename, source, sourceStatus)
     return {errorFounds, count};
 }
 
-const init = () =>
+const init = async () =>
 {
     try
     {
@@ -216,6 +235,12 @@ const init = () =>
         if (argv.hasOwnProperty("verbose"))
         {
             displayLog(`The option "--verbose" is deprecated. Use --silent instead`, {fg: "orange"});
+        }
+
+        if (argv.h || argv.help)
+        {
+            await displayHelpFile();
+            return;
         }
 
         if (argv.force)
@@ -300,15 +325,17 @@ const init = () =>
 
         }
 
+        process.exitCode = 0;
+        return;
 
-        process.exit(0);
     }
     catch (e)
     {
         displayError(e.message);
     }
 
-    process.exit(1);
+    process.exitCode = 1;
 };
 
-init();
+
+init().then(r => true).catch(e => console.error(e));
