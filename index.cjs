@@ -4,6 +4,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const toAnsi = require("to-ansi");
 const minimist = require("minimist");
+const glob = require("glob");
 
 const argv = minimist(process.argv.slice(2), {boolean: ["recursive", "overwrite", "silent", "force"]});
 
@@ -111,11 +112,106 @@ const getEntityStatus = (source) =>
     process.exit(1);
 };
 
+function getTargets()
+{
+    let targets = argv._ || [];
+
+    if (argv.target)
+    {
+        const targetList = Array.isArray(argv.target) ? argv.target : [argv.target];
+        targets.push(...targetList);
+    }
+
+    if (argv.targets)
+    {
+        const targetList = Array.isArray(argv.targets) ? argv.targets : [argv.targets];
+        targets.push(...targetList);
+    }
+
+    if (!targets.length)
+    {
+        displayError(`No targets given`);
+        process.exit(1);
+    }
+    return targets;
+}
+
+function cloneToTargets(targets, filename, source, sourceStatus)
+{
+    let errorFounds = 0;
+    let count = 0;
+    const n = targets.length;
+    for (let i = 0; i < n; ++i)
+    {
+        let target = targets[i];
+        try
+        {
+            target = normalisePath(targets[i]);
+
+            if (target.endsWith("/"))
+            {
+                target = resolvePath(path.join(target, filename));
+            }
+
+            // Source and destination are the same
+            if (resolvePath(source) === resolvePath(target))
+            {
+                ++errorFounds;
+                displayError(`Cannot clone source into itself: ${target}`);
+                continue;
+            }
+
+            const targetStatus = getEntityStatus(target);
+
+            // Destination exists already
+            if (targetStatus.exists && !argv.overwrite)
+            {
+                displayLog(`The destination "${target}" already exists. Skipping`, {fg: "gray"});
+                continue;
+            }
+
+            // Destination is a folder
+            if (targetStatus.dir)
+            {
+                target = resolvePath(path.join(target, filename));
+            }
+
+            if (sourceStatus.file)
+            {
+                copyFile(source, target, argv.recursive);
+            }
+            else
+            {
+                if (targetStatus.file)
+                {
+                    displayError(`You cannot clone a directory [${source}] into an existing file [${target}].`);
+                    ++errorFounds;
+                    continue;
+                }
+
+                if (!argv.force)
+                {
+                    displayLog(`To clone the directory [${source}], you must pass the --force option. Skipping`, {fg: "gray"});
+                    continue;
+                }
+
+                copyFolder(source, target, argv.recursive);
+            }
+            ++count;
+        }
+        catch (e)
+        {
+            displayError(`Failed to clone "${target}": ${e.message}`);
+        }
+    }
+    return {errorFounds, count};
+}
+
 const init = () =>
 {
     try
     {
-        let source = "";
+        let sources = [], source = "";
 
         if (argv.hasOwnProperty("verbose"))
         {
@@ -128,146 +224,82 @@ const init = () =>
             argv.overwrite = true;
         }
 
-        source = argv.source;
-
-        if (!source && argv._ && argv._.length)
+        const sourcesString = argv.sources;
+        if (sourcesString)
         {
-            source = argv._[0];
-            argv._ = argv._.slice(1);
+            sources = glob.sync(sourcesString, {
+                dot: true
+            });
+        }
+        else
+        {
+            source = argv.source;
+            if (!source && argv._ && argv._.length)
+            {
+                source = argv._[0];
+                argv._ = argv._.slice(1);
+            }
+
+            if (source)
+            {
+                sources.push(source);
+            }
         }
 
-        if (!source)
+        if (!sources.length)
         {
             displayError(`No source detected in arguments`);
             process.exit(1);
         }
 
-        source = resolvePath(source);
-
-        const sourceStatus = getEntityStatus(source);
-        if (!sourceStatus.exists)
+        for (let i = 0; i < sources.length; ++i)
         {
-            displayError(`The source file "${source}" does not exist, is inaccessible or is invalid`);
-            process.exit(1);
-        }
+            let source = sources[i];
+            source = resolvePath(source);
 
-        if (!(sourceStatus.file || sourceStatus.dir))
-        {
-            displayError(`The source file "${source}" is not a file/directory`);
-            process.exit(2);
-        }
-
-        let filename = path.parse(source).base;
-
-        // --------------------
-        // Determine targets folders and files
-        // --------------------
-        let targets = argv._ || [];
-
-        if (argv.target)
-        {
-            const targetList = Array.isArray(argv.target) ? argv.target : [argv.target];
-            targets.push(...targetList);
-        }
-
-        if (argv.targets)
-        {
-            const targetList = Array.isArray(argv.targets) ? argv.targets : [argv.targets];
-            targets.push(...targetList);
-        }
-
-        if (!targets.length)
-        {
-            displayError(`No targets given`);
-            process.exit(1);
-        }
-
-        // --------------------
-        // Start cloning
-        // --------------------
-        let errorFounds = 0;
-        let count = 0;
-        const n = targets.length;
-        for (let i = 0; i < n; ++i)
-        {
-            let target = targets[i];
-            try
+            const sourceStatus = getEntityStatus(source);
+            if (!sourceStatus.exists)
             {
-                target = normalisePath(targets[i]);
-
-                if (target.endsWith("/"))
-                {
-                    target = resolvePath(path.join(target, filename));
-                }
-
-                // Source and destination are the same
-                if (resolvePath(source) === resolvePath(target))
-                {
-                    ++errorFounds;
-                    displayError(`Cannot clone source into itself: ${target}`);
-                    continue;
-                }
-
-                const targetStatus = getEntityStatus(target);
-
-                // Destination exists already
-                if (targetStatus.exists && !argv.overwrite)
-                {
-                    displayLog(`The destination "${target}" already exists. Skipping`, {fg: "gray"});
-                    continue;
-                }
-
-                // Destination is a folder
-                if (targetStatus.dir)
-                {
-                    target = resolvePath(path.join(target, filename));
-                }
-
-                if (sourceStatus.file)
-                {
-                    copyFile(source, target, argv.recursive);
-                }
-                else
-                {
-                    if (targetStatus.file)
-                    {
-                        displayError(`You cannot clone a directory [${source}] into an existing file [${target}].`);
-                        ++errorFounds;
-                        continue;
-                    }
-
-                    if (!argv.force)
-                    {
-                        displayLog(`To clone the directory [${source}], you must pass the --force option. Skipping`, {fg: "gray"});
-                        continue;
-                    }
-
-                    copyFolder(source, target, argv.recursive);
-                }
-                ++count;
-            }
-            catch (e)
-            {
-                displayError(`Failed to clone "${target}": ${e.message}`);
-            }
-        }
-
-        if (!count)
-        {
-
-            if (errorFounds)
-            {
-                displayError(toAnsi.getTextFromColor(`${errorFounds} ${errorFounds === 1 ? "issue" : "issues"} detected`, {fg: "red"}));
+                displayError(`The source file "${source}" does not exist, is inaccessible or is invalid`);
                 process.exit(1);
             }
 
-            displayLog(`No file copied`, {fg: "gray"});
-            process.exit(0);
+            if (!(sourceStatus.file || sourceStatus.dir))
+            {
+                displayError(`The source file "${source}" is not a file/directory`);
+                process.exit(2);
+            }
+
+            let filename = path.parse(source).base;
+
+            // --------------------
+            // Determine targets folders and files
+            // --------------------
+            let targets = getTargets();
+
+            // --------------------
+            // Start cloning
+            // --------------------
+            let {errorFounds, count} = cloneToTargets(targets, filename, source, sourceStatus);
+
+            if (!count)
+            {
+                if (errorFounds)
+                {
+                    displayError(toAnsi.getTextFromColor(`${errorFounds} ${errorFounds === 1 ? "issue" : "issues"} detected`, {fg: "red"}));
+                    process.exit(1);
+                }
+
+                displayLog(`No file copied`, {fg: "gray"});
+                process.exit(0);
+            }
+
+            const message = `${count} ${count === 1 ? "item" : "items"} cloned`;
+            displayLog(``.padEnd(message.length, "-"), {fg: "orange"});
+            displayLog(message, {fg: "orange"});
+
         }
 
-        const message = `${count} ${count === 1 ? "item" : "items"} cloned`;
-        displayLog(``.padEnd(message.length, "-"), {fg: "orange"});
-        displayLog(message, {fg: "orange"});
 
         process.exit(0);
     }
