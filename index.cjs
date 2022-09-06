@@ -237,6 +237,12 @@ const init = async () =>
             displayLog(`The option "--verbose" is deprecated. Use --silent instead`, {fg: "orange"});
         }
 
+        if (argv.v || argv.version)
+        {
+            console.log(packageJson.version);
+            return;
+        }
+
         if (argv.h || argv.help)
         {
             await displayHelpFile();
