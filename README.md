@@ -11,7 +11,15 @@ npm install clonefile [-g]
 ### In a Terminal
 
 ```shell
-$> clonefile source target
+$> clonefile <source> <target> [options] 
+```
+
+```shell
+$> clonefile [--source] <source> [--target] <target1> <target2>...<targetN>  [options] 
+```
+
+```shell
+$> clonefile --sources <pattern> <target1> <target2>...<targetN>  [options] 
 ```
 
 <br/>
@@ -20,7 +28,7 @@ $> clonefile source target
 
 <br/>
 
-#### Clone file
+#### Clone a file
 
 ```shell
 $> clonefile license.txt license.md  
@@ -34,12 +42,25 @@ $> clonefile --source license.txt --target license.md
 
 <br/>
 
+>> **NOTE:** The source and the target arguments can be omitted
+
+<br/>
+
+---
+
+<br/>
+
 #### Clone a file into directory
 
 ```shell
 # Copy license.txt into my-dest-dir
 $> clonefile license.txt my-dest-dir/  
 ```
+
+<br/>
+
+
+---
 
 <br/>
 
@@ -52,11 +73,49 @@ $> clonefile license.txt my-file-target-1 my-file-target-2 my-dest-dir-1/
 
 <br/>
 
+---
+
+<br/>
+
 #### Clone a directory in multiple directories
 
 ```shell
-$> clonefile --force license.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/  
+$> clonefile --force sourcedir/ my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/  
 ```
+
+<br/>
+
+---
+
+<br/>
+
+#### Clone multiple files from the current directory to multiple directories with the --sources options (mandatory)
+
+```shell
+$> clonefile --force --sources *.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/  
+```
+
+**_Result_**
+
+>> C:/projects/clonefile/somefile1.txt => C:/projects/clonefile/my-dir-1/somefile1.txt
+> C:/projects/clonefile/somefile1.txt => C:/projects/clonefile/my-dir-2/somefile1.txt
+> C:/projects/clonefile/somefile1.txt => C:/projects/clonefile/my-dir-3/somefile1.txt
+>> --------------
+>> 3 items cloned
+> 
+>> C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-1/somefile2.txt
+> C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-2/somefile2.txt
+> C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-3/somefile2.txt
+> >--------------
+> >3 items cloned
+> 
+> >C:/projects/clonefile/somefile3.txt => C:/projects/clonefile/my-dir-1/somefile3.txt
+> C:/projects/clonefile/somefile3.txt => C:/projects/clonefile/my-dir-2/somefile3.txt
+> C:/projects/clonefile/somefile3.txt => C:/projects/clonefile/my-dir-3/somefile3.txt
+> >--------------
+> >3 items cloned
+
+<br/>
 
 ---
 
@@ -70,6 +129,7 @@ $> clonefile --force license.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/
 
 <br/>
 
+---
 
 ## Options
 
