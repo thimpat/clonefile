@@ -106,14 +106,14 @@ $> clonefile --force --sources *.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3
 > C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-1/somefile2.txt
 > C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-2/somefile2.txt
 > C:/projects/clonefile/somefile2.txt => C:/projects/clonefile/my-dir-3/somefile2.txt
-> >--------------
-> >3 items cloned
+> --------------
+> 3 items cloned
 > 
 > >C:/projects/clonefile/somefile3.txt => C:/projects/clonefile/my-dir-1/somefile3.txt
 > C:/projects/clonefile/somefile3.txt => C:/projects/clonefile/my-dir-2/somefile3.txt
 > C:/projects/clonefile/somefile3.txt => C:/projects/clonefile/my-dir-3/somefile3.txt
-> >--------------
-> >3 items cloned
+> --------------
+> 3 items cloned
 
 <br/>
 
@@ -139,7 +139,6 @@ $> clonefile --force --sources *.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3
 | --overwrite   | true        | boolean     | _Whether to overwrite destination_       |
 | --recursive   | false       | boolean     | _create target directories if necessary_ |
 | --silent      | false       | boolean     | _Whether to display messages_            |
-| ~~--verbose~~ | ~~true~~    | ~~boolean~~ | ~~_display errors + messages_~~          |
 | --force       | false       | boolean     | _To allow cloning a directory_           |
 | --sources     | ""          | string      | _Pattern to select files to copy_        |
 | --source      | ""          | string      | _File path (not pattern) to copy_        |
