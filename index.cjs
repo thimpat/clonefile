@@ -80,7 +80,7 @@ const copyFile = (source, dest, isRecursive) =>
     }
     catch (e)
     {
-        console.error(e.message);
+        displayError(e.message);
     }
 };
 
@@ -92,7 +92,7 @@ const copyFolder = (source, dest) =>
         {
             if (err)
             {
-                console.error(err.message);
+                displayError(err.message);
                 return;
             }
 
@@ -101,7 +101,7 @@ const copyFolder = (source, dest) =>
     }
     catch (e)
     {
-        console.error({lid: 1000}, e.message);
+        displayError({lid: 1000}, e.message);
     }
 
 };
@@ -128,7 +128,8 @@ const getEntityStatus = (source) =>
 
     }
 
-    process.exit(1);
+    process.exitCode = process.exitCode || 1;
+    return false;
 };
 
 function getTargets()
@@ -150,7 +151,8 @@ function getTargets()
     if (!targets.length)
     {
         displayError(`No targets given`);
-        process.exit(1);
+        process.exitCode = process.exitCode || 1;
+        return null;
     }
     return targets;
 }
@@ -181,6 +183,11 @@ function cloneToTargets(targets, filename, source, sourceStatus)
             }
 
             const targetStatus = getEntityStatus(target);
+            if (!targetStatus)
+            {
+                process.exitCode = process.exitCode || 4;
+                continue;
+            }
 
             // Destination exists already
             if (targetStatus.exists && !argv.overwrite)
@@ -230,6 +237,8 @@ const init = async () =>
 {
     try
     {
+        process.exitCode = 0;
+
         let sources = [], source = "";
 
         if (argv.hasOwnProperty("verbose"))
@@ -280,7 +289,8 @@ const init = async () =>
         if (!sources.length)
         {
             displayError(`No source detected in arguments`);
-            process.exit(1);
+            process.exitCode = 1;
+            return;
         }
 
         for (let i = 0; i < sources.length; ++i)
@@ -289,16 +299,24 @@ const init = async () =>
             source = resolvePath(source);
 
             const sourceStatus = getEntityStatus(source);
+            if (!sourceStatus)
+            {
+                process.exitCode = process.exitCode || 3;
+                continue;
+            }
+
             if (!sourceStatus.exists)
             {
                 displayError(`The source file "${source}" does not exist, is inaccessible or is invalid`);
-                process.exit(1);
+                process.exitCode = process.exitCode || 1;
+                continue;
             }
 
             if (!(sourceStatus.file || sourceStatus.dir))
             {
                 displayError(`The source file "${source}" is not a file/directory`);
-                process.exit(2);
+                process.exitCode = process.exitCode || 2;
+                continue;
             }
 
             let filename = path.parse(source).base;
@@ -307,6 +325,10 @@ const init = async () =>
             // Determine targets folders and files
             // --------------------
             let targets = getTargets();
+            if (!targets)
+            {
+                continue;
+            }
 
             // --------------------
             // Start cloning
@@ -318,11 +340,13 @@ const init = async () =>
                 if (errorFounds)
                 {
                     displayError(toAnsi.getTextFromColor(`${errorFounds} ${errorFounds === 1 ? "issue" : "issues"} detected`, {fg: "red"}));
-                    process.exit(1);
+                    process.exitCode = process.exitCode || 1;
+                    return;
                 }
 
                 displayLog(`No file copied`, {fg: "gray"});
-                process.exit(0);
+                process.exitCode = process.exitCode || 0;
+                return;
             }
 
             const message = `${count} ${count === 1 ? "item" : "items"} cloned`;
@@ -331,7 +355,7 @@ const init = async () =>
 
         }
 
-        process.exitCode = 0;
+        process.exitCode = process.exitCode || 0;
         return;
 
     }
@@ -340,8 +364,8 @@ const init = async () =>
         displayError(e.message);
     }
 
-    process.exitCode = 1;
+    process.exitCode = process.exitCode || 1;
 };
 
 
-init().then(r => true).catch(e => console.error(e));
+init().then(() => true).catch(e => displayError(e));
