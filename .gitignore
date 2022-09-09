@@ -97,3 +97,4 @@ file-1.txt
 my-file1.txt
 *.text
 /my-dir-*
+/test/output/
