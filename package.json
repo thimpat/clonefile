@@ -1,13 +1,13 @@
 {
   "name": "clonefile",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Clone file into multiple locations",
   "main": "./index.cjs",
   "bin": {
     "clonefile": "index.cjs"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "nyc --reporter=lcov --reporter=text-summary mocha --exit --sort --exclude test/lib",
     "demo1": "node index.cjs my-file1.txt file-2.md somewhere/else/ttt.txt somewhere1/ my-dir/ --target simple.txt --recursive"
   },
   "keywords": [
@@ -17,10 +17,15 @@
   "author": "Patrice Thimothee",
   "license": "MIT",
   "devDependencies": {
-    "eslint": "^8.17.0"
+    "chai": "^4.3.6",
+    "chai-files": "^1.4.0",
+    "eslint": "^8.17.0",
+    "mocha": "^10.0.0",
+    "nyc": "^15.1.0",
+    "shelljs": "^0.8.5"
   },
   "dependencies": {
-    "@thimpat/libutils": "^1.5.1",
+    "@thimpat/libutils": "^1.6.0",
     "fs-extra": "^10.1.0",
     "glob": "^8.0.3",
     "minimist": "^1.2.6",

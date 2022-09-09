@@ -8,13 +8,25 @@ const glob = require("glob");
 
 const toAnsi = require("to-ansi");
 const {showHelp} = require("pageterm");
-const {joinPath} = require("@thimpat/libutils");
+const {
+    joinPath,
+    calculateCommon,
+    resolvePath,
+    isConventionalFolder,
+    normalisePath,
+    normaliseRealPath
+} = require("@thimpat/libutils");
 
-const argv = minimist(process.argv.slice(2), {boolean: ["recursive", "overwrite", "silent", "force"]});
+const argv = minimist(process.argv.slice(2), {boolean: ["recursive", "silent", "force"]});
 
 const method = fs.copyFileSync ? "new" : "stream";
 
 const packageJson = require("./package.json");
+
+const LIMIT_FILES = parseInt(process.env.CLONE_FILE_MAX_PATTERN) || 200;
+
+let errorFounds = 0;
+let count = 0;
 
 const displayLog = (message, style = {fg: "yellow"}) =>
 {
@@ -40,24 +52,14 @@ const displayHelpFile = async function ()
 
 const displayError = (message, style = {fg: "red"}) =>
 {
+    if (message instanceof Error)
+    {
+        message = message.message || "Unexpected error";
+    }
     console.error(toAnsi.getTextFromColor("Error: " + message, style));
 };
 
-
-const normalisePath = (filepath) =>
-{
-    filepath = path.normalize(filepath);
-    filepath = filepath.replaceAll("\\", "/");
-    return filepath;
-};
-
-const resolvePath = (filepath) =>
-{
-    filepath = path.resolve(filepath);
-    return normalisePath(filepath);
-};
-
-const copyFile = (source, dest, isRecursive) =>
+const copyFile = (source, dest, isRecursive = true) =>
 {
     try
     {
@@ -80,7 +82,7 @@ const copyFile = (source, dest, isRecursive) =>
     }
     catch (e)
     {
-        console.error(e.message);
+        displayError(e.message);
     }
 };
 
@@ -88,47 +90,73 @@ const copyFolder = (source, dest) =>
 {
     try
     {
-        fs.copySync(source, dest, {overwrite: true}, function (err)
+        const err = fs.copySync(source, dest, {overwrite: true});
+        if (err)
         {
-            if (err)
-            {
-                console.error(err.message);
-                return;
-            }
+            displayError(err.message);
+            return;
+        }
 
-            displayLog(`${source} => ${dest}`, {fg: "green"});
-        });
+        displayLog(`${source} => ${dest}`, {fg: "green"});
     }
     catch (e)
     {
-        console.error({lid: 1000}, e.message);
+        displayError({lid: 1000}, e.message);
     }
 
 };
 
-const getEntityStatus = (source) =>
+/**
+ * Tells whether the provided path exists on disk, is a directory or a file
+ * @param filepath
+ * @returns {{}|boolean}
+ */
+const getEntityStatus = (filepath) =>
 {
-    try
-    {
-        const res = {};
-        if (!fs.existsSync(source))
-        {
-            res.exists = false;
-            return res;
-        }
+    const res = {};
 
+    if (fs.existsSync(filepath))
+    {
         res.exists = true;
-        const stats = fs.lstatSync(source);
-        res.file = stats.isFile();
-        res.dir = stats.isDirectory();
-        return res;
+        const stats = fs.lstatSync(filepath);
+        if (!stats.isFile() && !stats.isDirectory())
+        {
+            res.unhandledType = true;
+            throw new Error(`Unknown entify type for ${filepath}`);
+        }
+        res.isFile = stats.isFile();
     }
-    catch (e)
+    else
     {
+        res.exists = false;
+        if (isConventionalFolder(filepath))
+        {
+            res.isFile = false;
+        }
+        else
+        {
+            const filename = filepath.split("/").pop();
 
+            // We are going to assume that a file with no dot character in it is a folder
+            res.isFile = filename.indexOf(".") > -1;
+        }
     }
 
-    process.exit(1);
+    res.isDir = !res.isFile;
+
+    if (res.isFile)
+    {
+        res.filePath = normalisePath(filepath);
+        res.dirPath = path.parse(filepath).dir;
+        res.dirPath = normalisePath(res.dirPath, {isFolder: true});
+    }
+
+    if (res.isDir)
+    {
+        res.filePath = normalisePath(filepath, {isFolder: true});
+    }
+
+    return res;
 };
 
 function getTargets()
@@ -150,26 +178,64 @@ function getTargets()
     if (!targets.length)
     {
         displayError(`No targets given`);
-        process.exit(1);
+        process.exitCode = process.exitCode || 1;
+        return null;
     }
     return targets;
 }
 
-function cloneToTargets(targets, filename, source, sourceStatus)
+function cloneToTargets(targets, {source, commonSourceDir})
 {
-    let errorFounds = 0;
-    let count = 0;
     const n = targets.length;
+
+    let sourceStatus = getEntityStatus(source);
+
     for (let i = 0; i < n; ++i)
     {
         let target = targets[i];
         try
         {
-            target = normalisePath(targets[i]);
+            target = resolvePath(target);
 
-            if (target.endsWith("/"))
+            let targetStatus = getEntityStatus(target);
+            if (targetStatus.isDir)
             {
-                target = resolvePath(path.join(target, filename));
+                const dest = source.split(commonSourceDir)[1];
+                if (dest)
+                {
+                    target = resolvePath(path.join(target, dest));
+                }
+
+                // If dest is a directory, we lose the forward slash, so we need to put it back
+                if (sourceStatus.isDir)
+                {
+                    target = normalisePath(target, {isFolder: true});
+                }
+
+                targetStatus = getEntityStatus(target);
+            }
+
+            if (targetStatus.isFile)
+            {
+                // If the file exists already, we reject
+                if (targetStatus.exists)
+                {
+                    if (!argv.force)
+                    {
+                        displayError(`The destination "${target}" already exists. Use --force option to overwrite. Skipping`, {fg: "red"});
+                        continue;
+                    }
+                }
+
+                // If the parent directory for this file does not exist, we reject it
+                if (!fs.existsSync(targetStatus.dirPath))
+                {
+                    if (!(argv.force || argv.recursive))
+                    {
+                        displayError(`The folder "${targetStatus.dirPath}" for "${target}" does not exist. Use --force or --recursive options to create it. Skipping`, {fg: "red"});
+                        continue;
+                    }
+                }
             }
 
             // Source and destination are the same
@@ -180,41 +246,27 @@ function cloneToTargets(targets, filename, source, sourceStatus)
                 continue;
             }
 
-            const targetStatus = getEntityStatus(target);
-
-            // Destination exists already
-            if (targetStatus.exists && !argv.overwrite)
+            if (sourceStatus.isFile)
             {
-                displayLog(`The destination "${target}" already exists. Skipping`, {fg: "gray"});
-                continue;
-            }
-
-            // Destination is a folder
-            if (targetStatus.dir)
-            {
-                target = resolvePath(path.join(target, filename));
-            }
-
-            if (sourceStatus.file)
-            {
-                copyFile(source, target, argv.recursive);
+                copyFile(source, target, argv.force || argv.recursive );
             }
             else
             {
-                if (targetStatus.file)
+                if (targetStatus.isFile)
                 {
-                    displayError(`You cannot clone a directory [${source}] into an existing file [${target}].`);
+                    if (targetStatus.exists)
+                    {
+                        displayError(`You cannot clone a directory [${source}] into an existing file [${target}].`);
+                    }
+                    else
+                    {
+                        displayError(`You cannot clone a directory [${source}] into a file [${target}].\n Use the --force option to override.`);
+                    }
                     ++errorFounds;
                     continue;
                 }
 
-                if (!argv.force)
-                {
-                    displayLog(`To clone the directory [${source}], you must pass the --force option. Skipping`, {fg: "gray"});
-                    continue;
-                }
-
-                copyFolder(source, target, argv.recursive);
+                 copyFolder(source, target);
             }
             ++count;
         }
@@ -230,11 +282,19 @@ const init = async () =>
 {
     try
     {
+        process.exitCode = 0;
+
         let sources = [], source = "";
 
         if (argv.hasOwnProperty("verbose"))
         {
             displayLog(`The option "--verbose" is deprecated. Use --silent instead`, {fg: "orange"});
+        }
+
+        if (argv.hasOwnProperty("overwrite"))
+        {
+            displayLog(`The option "--overwrite" is deprecated. Use --force instead`, {fg: "orange"});
+            argv.force = argv.force || argv.overwrite;
         }
 
         if (argv.v || argv.version)
@@ -255,83 +315,148 @@ const init = async () =>
             argv.overwrite = true;
         }
 
-        const sourcesString = argv.sources;
-        if (sourcesString)
+        let patterns = argv.sources;
+        if (patterns)
         {
-            sources = glob.sync(sourcesString, {
-                dot: true
-            });
-        }
-        else
-        {
-            source = argv.source;
-            if (!source && argv._ && argv._.length)
+            if (!Array.isArray(patterns))
             {
-                source = argv._[0];
-                argv._ = argv._.slice(1);
+                patterns = [patterns];
             }
 
+            for (let i = 0; i < patterns.length; ++i)
+            {
+                const pattern = patterns[i] || "";
+                if (!pattern)
+                {
+                    displayLog(`Empty pattern detected`);
+                    continue;
+                }
+
+                const srcs = glob.sync(pattern, {
+                    dot: true
+                });
+
+                if (!srcs.length)
+                {
+                    displayLog(`The pattern "${pattern}" does not match any file or directory`);
+                    continue;
+                }
+
+                sources.push(...srcs);
+            }
+
+            sources = [...new Set(sources)];
+
+            if (sources.length > LIMIT_FILES)
+            {
+                if (!argv.force)
+                {
+                    displayError(`More than ${LIMIT_FILES} files find in pattern. Use --force to allow the process`);
+                    return;
+                }
+            }
+        }
+
+        if (argv.source)
+        {
+            source = argv.source;
             if (source)
             {
                 sources.push(source);
             }
         }
 
+        if (!argv.sources && !argv.sources)
+        {
+            if (argv._ && argv._.length)
+            {
+                source = argv._[0];
+                sources.push(source);
+                argv._ = argv._.slice(1);
+            }
+        }
+
         if (!sources.length)
         {
             displayError(`No source detected in arguments`);
-            process.exit(1);
+            process.exitCode = 1;
+            return;
         }
 
+        const validSources = [];
+        // Try to find early the real nature of every given source
         for (let i = 0; i < sources.length; ++i)
         {
-            let source = sources[i];
-            source = resolvePath(source);
-
-            const sourceStatus = getEntityStatus(source);
-            if (!sourceStatus.exists)
+            let source = sources[i] || "";
+            source = source.trim();
+            const checkSource = normaliseRealPath(source);
+            if (!checkSource.success)
             {
                 displayError(`The source file "${source}" does not exist, is inaccessible or is invalid`);
-                process.exit(1);
+                continue;
             }
 
-            if (!(sourceStatus.file || sourceStatus.dir))
+            source = checkSource.filepath;
+            // Determine if the source does not have other issues
+            const sourceStatus = getEntityStatus(source);
+            if (sourceStatus.unhandledType)
             {
                 displayError(`The source file "${source}" is not a file/directory`);
-                process.exit(2);
+                process.exitCode = process.exitCode || 2;
+                continue;
             }
 
-            let filename = path.parse(source).base;
+            source = resolvePath(source);
+            validSources.push(source);
+        }
+
+        if (!validSources.length)
+        {
+            process.exitCode = process.exitCode || 3;
+            return;
+        }
+
+        let commonSourceDir = calculateCommon(validSources);
+        commonSourceDir = resolvePath(commonSourceDir);
+
+        for (let i = 0; i < validSources.length; ++i)
+        {
+            let source = validSources[i];
 
             // --------------------
             // Determine targets folders and files
             // --------------------
             let targets = getTargets();
+            if (!targets)
+            {
+                continue;
+            }
 
             // --------------------
             // Start cloning
             // --------------------
-            let {errorFounds, count} = cloneToTargets(targets, filename, source, sourceStatus);
+            let {errorFounds, count} = cloneToTargets(targets, {source, commonSourceDir});
 
             if (!count)
             {
                 if (errorFounds)
                 {
                     displayError(toAnsi.getTextFromColor(`${errorFounds} ${errorFounds === 1 ? "issue" : "issues"} detected`, {fg: "red"}));
-                    process.exit(1);
+                    process.exitCode = process.exitCode || 1;
+                    return;
                 }
 
                 displayLog(`No file copied`, {fg: "gray"});
-                process.exit(0);
+                process.exitCode = process.exitCode || 0;
+                return;
             }
-
-            const message = `${count} ${count === 1 ? "item" : "items"} cloned`;
-            displayLog(``.padEnd(message.length, "-"), {fg: "orange"});
-            displayLog(message, {fg: "orange"});
-
         }
 
-        process.exitCode = 0;
+        const message = `${count} ${count === 1 ? "item" : "items"} cloned`;
+        displayLog(``.padEnd(message.length, "-"), {fg: "orange"});
+        displayLog(message, {fg: "orange"});
+
+        process.exitCode = process.exitCode || 0;
         return;
 
     }
@@ -340,8 +465,8 @@ const init = async () =>
         displayError(e.message);
     }
 
-    process.exitCode = 1;
+    process.exitCode = process.exitCode || 1;
 };
 
 
-init().then(r => true).catch(e => console.error(e));
+init().then(() => true).catch(e => displayError(e));
