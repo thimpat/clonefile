@@ -1,0 +1,25 @@
+name: Test
+env:
+  CLONE_FILE_MAX_PATTERN: "200"
+on:
+  push:
+    branches:
+      - "**"
+    paths-ignore:
+      - "**.md"
+      - ".vscode/**"
+jobs:
+  run-test:
+    runs-on: [self-hosted]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Check out Git repository
+        uses: thimpat/clonefile/.github/actions/checkout@ci
+      - name: Install dependencies
+        shell: powershell
+        run: |
+          npm ci install
+      - name: Test
+        shell: powershell
+        run: |
+          npm test
