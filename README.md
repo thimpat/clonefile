@@ -1,3 +1,7 @@
+[![Test workflow](https://github.com/thimpat/clonefile/actions/workflows/test.yml/badge.svg)](https://github.com/thimpat/clonefile/actions/workflows/test.yml)
+[![nycrc Coverage](https://img.shields.io/nycrc/thimpat/clonefile?preferredThreshold=lines)](https://github.com/thimpat/clonefile/blob/main/README.md)
+[![npm version](https://badge.fury.io/js/clonefile.svg)](https://www.npmjs.com/package/clonefile)
+
 ## Installation
 
 ```shell
