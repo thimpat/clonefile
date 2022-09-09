@@ -23,7 +23,7 @@
 cmake-build-*/
 .idea/**/mongoSettings.xml
 *.iws
-out/
+/out/
 .idea_modules/
 atlassian-ide-plugin.xml
 .idea/replstate.xml
@@ -70,7 +70,6 @@ web_modules/
 .cache
 .parcel-cache
 .next
-out
 .nuxt
 dist
 .cache/
@@ -93,8 +92,6 @@ dist
 .idea/
 my-cool-dir*
 .eslintrc.cjs
-file-1.txt
-my-file1.txt
 *.text
 /my-dir-*
 /test/output/
