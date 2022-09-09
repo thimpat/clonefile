@@ -98,3 +98,8 @@ my-file1.txt
 *.text
 /my-dir-*
 .run//test/
+/.github/
+/.run/
+/.nycrc
+
+/bump.js
