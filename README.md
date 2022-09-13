@@ -137,6 +137,18 @@ $> clonefile --force --sources *.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3
 
 <br/>
 
+
+---
+<br/>
+
+#### Clone multiple files and folders from multiple locations to multiple directories
+
+```shell
+$> clonefile --force --sources *.txt --sources ./sowehere/ --sources ../another-location/*.png my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/  
+```
+
+<br/>
+
 ---
 
 ## Options
