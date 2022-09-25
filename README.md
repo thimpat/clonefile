@@ -196,4 +196,24 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 
 <br/>
 
+## Changelog
 
+##### current:
+*  Add various fixes
+*  Deprecate the --recursive option with --force
+*  Allow selecting multiple sources with the --source option
+
+##### 2.1.1:
+*  Do not stop at the first error
+
+##### 1.1.3:
+*  Make --force option automatically be --recursive and --overwrite
+
+##### 1.1.0:
+*  Allow cloning a directory
+*  Replace the --verbose option with --silent
+*  Fix cloning when options misplaced
+
+
+
+---
