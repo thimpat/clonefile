@@ -44,8 +44,6 @@ describe("CloneFile", function ()
             expect(stdout)
                 .to.contain(`The option "--overwrite" is deprecated. Use --force instead`);
         });
-
-
     });
 
     describe("on miscellaneous", () =>
@@ -62,21 +60,21 @@ describe("CloneFile", function ()
         {
             const {stderr} = shell.exec(`node ${cloneFile} work/file-1.txt`, {silent: false});
             expect(stderr)
-                .to.contain(`No targets given`);
+                .to.contain(`No detected targets in arguments`);
         });
 
         it("should fail when only the --source option is given", function ()
         {
             const {stderr} = shell.exec(`node ${cloneFile} --source work/file-1.txt`, {silent: false});
             expect(stderr)
-                .to.contain(`No targets given`);
+                .to.contain(`No detected targets in arguments`);
         });
 
         it("should fail when no source is passed", function ()
         {
             const {stderr} = shell.exec(`node ${cloneFile} --target output`, {silent: false});
             expect(stderr)
-                .to.contain("Error: No source detected in arguments");
+                .to.contain("Error: No detected source in arguments");
         });
 
         it("should fail when the source does not exist", function ()
@@ -108,12 +106,13 @@ describe("CloneFile", function ()
 
         it("should not clone a file into a non-existing directory", async function ()
         {
-            const {stderr} = shell.exec(`node ${cloneFile} work/file-1.txt output/file-2.md`, {silent: false});
+            const {stderr} = shell.exec(`node ${cloneFile} work/file-1.txt output/dir1/file-2.md`, {silent: false});
 
             expect(stderr)
                 .to.contain("The folder")
                 .to.contain("does not exist")
-                .to.contain("Use --force or --recursive options to create it");
+                .to.contain("/output/dir1/")
+                .to.contain("Use --force option to allow the action");
         });
 
         it("should clone into non-existing directory with the --force option", async function ()
@@ -133,7 +132,7 @@ describe("CloneFile", function ()
             expect(stderr)
                 .to.contain("Error: The folder")
                 .to.contain("does not exist")
-                .to.contain("Use --force or --recursive options to create it. Skipping");
+                .to.contain("Use --force option to allow the action");
         });
 
         it("should not clone a file when the target file already exists especially with the overwrite option" +
@@ -144,7 +143,7 @@ describe("CloneFile", function ()
             expect(stderr)
                 .to.contain("Error: The folder")
                 .to.contain("does not exist")
-                .to.contain("Use --force or --recursive options to create it. Skipping");
+                .to.contain("Use --force option to allow the action");
         });
 
 
@@ -178,29 +177,51 @@ describe("CloneFile", function ()
             }
         });
 
-        it("should fail to clone a directory into a non existing file", async function ()
+        it("should fail to clone files from a directory into an existing file", async function ()
         {
             const {stderr} = shell.exec(`node ${cloneFile} work/my-dir ./output.txt`, {silent: false});
 
             expect(stderr)
-                .to.contain("Error: You cannot clone a directory")
-                .to.contain("into a file")
-                .to.contain("Use the --force option to override");
+                .to.contain(`"./work/my-dir/my-file1.txt" already exists`)
+                .to.contain(`"./work/my-dir/some/more/depth/file-1.txt" already exists`)
+                .to.contain(`"./work/my-dir/some/more/depth/file-2.txt" already exists`);
+        });
+
+        it(`should display a warning about multiple source to copy themselves to on single file`, async function ()
+        {
+            const {stdout} = shell.exec(`node ${cloneFile} --force work/my-dir ./output.txt`, {silent: false});
+
+            expect(stdout)
+                .to.contain("is a single file with 3 more source(s) to copy over this same file");
+        });
+
+        it("should fail to clone a directory into a non-existent directory", async function ()
+        {
+            const {stdout, stderr} = shell.exec(`node ${cloneFile} work/my-dir ./output`, {silent: false});
+
+            expect(stderr)
+                .to.contain("The folder")
+                .to.contain(" does not exist");
+
+            expect(stdout)
+                .to.contain("0 items cloned");
         });
 
         it("should confirm cloning a directory into another directory", async function ()
         {
-            const {stdout} = shell.exec(`node ${cloneFile} work/my-dir ./output`, {silent: false});
+            const {stdout} = shell.exec(`node ${cloneFile} --force work/my-dir ./output`, {silent: false});
 
             expect(stdout)
-                .to.contain("/work/my-dir/ =>")
-                .to.contain("/output/")
-                .to.contain("1 item cloned");
+                .to.contain("/work/my-dir/file-1.txt =>")
+                .to.contain("/work/my-dir/my-file1.txt =>")
+                .to.contain("/work/my-dir/some/more/depth/file-1.txt =>")
+                .to.contain("/work/my-dir/some/more/depth/file-2.txt =>")
+                .to.contain("4 items cloned");
         });
 
         it("should clone a directory into another directory and keep the structure", async function ()
         {
-            shell.exec(`node ${cloneFile} work/my-dir ./output`, {silent: false});
+            shell.exec(`node ${cloneFile} --force work/my-dir ./output`, {silent: false});
 
             expect(dir("output")).to.exist;
             expect(dir("output/some")).to.exist;
@@ -240,19 +261,19 @@ describe("CloneFile", function ()
 
         it("should fail to clone a file into multiple directories", function ()
         {
-            const {stderr} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/somewhere1/ ./output/somewhere2/ ./output/somewhere3/`, {silent: false});
+            const {stdout, stderr} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/somewhere1/ ./output/somewhere2/ ./output/somewhere3/`, {silent: false});
 
             expect(stderr)
-                .to.contain("Error: The folder ")
-                .to.contain("Use --force or --recursive options to create it. Skipping")
-                .to.contain("/output/somewhere1/file-1.txt")
-                .to.contain("/output/somewhere2/file-1.txt")
-                .to.contain("/output/somewhere3/file-1.txt");
+                .to.contain("The folder")
+                .to.contain("does not exist");
+
+            expect(stdout)
+                .to.contain("0 items cloned");
         });
 
-        it("should clone a file into multiple directories with the recursive option", function ()
+        it("should clone a file into multiple directories with the force option", function ()
         {
-            const {stdout} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/somewhere1/ ./output/somewhere2/ ./output/somewhere3/ --recursive`, {silent: false});
+            const {stdout} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/somewhere1/ ./output/somewhere2/ ./output/somewhere3/ --force`, {silent: false});
 
             expect(stdout)
                 .to.contain("/output/somewhere1/file-1.txt")
@@ -263,7 +284,7 @@ describe("CloneFile", function ()
 
         it("should clone a file into multiple directories and multiple files", function ()
         {
-            const {stdout} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/file-01.txt ./output/file-02.txt ./output/somewhere1/ ./output/somewhere2/ --recursive`, {silent: false});
+            const {stdout} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/file-01.txt ./output/file-02.txt ./output/somewhere1/ ./output/somewhere2/ --force`, {silent: false});
 
             expect(stdout)
                 .to.contain("/output/file-01.txt")
@@ -288,19 +309,21 @@ describe("CloneFile", function ()
 
         it("should display errors despite the silent option", function ()
         {
-            const {stderr} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/somewhere1/ ./output/somewhere2/ ./output/somewhere3/ --silent`, {silent: false});
+            const {stdout, stderr} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/somewhere1/ ./output/somewhere2/ ./output/somewhere3/ --silent`, {silent: false});
 
             expect(stderr)
                 .to.contain("Error: The folder ")
-                .to.contain("Use --force or --recursive options to create it. Skipping")
-                .to.contain("/output/somewhere1/file-1.txt")
-                .to.contain("/output/somewhere2/file-1.txt")
-                .to.contain("/output/somewhere3/file-1.txt");
+                .to.contain("does not exist")
+                .to.contain("/output/somewhere1/")
+                .to.contain("/output/somewhere2/")
+                .to.contain("/output/somewhere3/");
+
+            expect(stdout).to.be.empty;
         });
 
         it("should clone a file into multiple directories with the recursive option", function ()
         {
-            const {stdout} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/somewhere1/ ./output/somewhere2/ ./output/somewhere3/ --recursive --silent`, {silent: false});
+            const {stdout} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/somewhere1/ ./output/somewhere2/ ./output/somewhere3/ --force --silent`, {silent: false});
 
             expect(stdout)
                 .to.be.empty;
@@ -316,7 +339,7 @@ describe("CloneFile", function ()
 
         it("should clone a file into multiple directories and multiple files", function ()
         {
-            const {stdout} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/file-01.txt ./output/file-02.txt ./output/somewhere1/ ./output/somewhere2/ --recursive --silent`, {silent: false});
+            const {stdout} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/file-01.txt ./output/file-02.txt ./output/somewhere1/ ./output/somewhere2/ --force --silent`, {silent: false});
 
             expect(stdout)
                 .to.be.empty;
@@ -333,7 +356,7 @@ describe("CloneFile", function ()
 
         it("should clone a directory into another directory silently and keep the structure", async function ()
         {
-            const {stdout} = shell.exec(`node ${cloneFile} work/my-dir ./output --silent`, {silent: false});
+            const {stdout} = shell.exec(`node ${cloneFile} work/my-dir ./output --silent --force`, {silent: false});
 
             expect(stdout)
                 .to.be.empty;
@@ -350,7 +373,7 @@ describe("CloneFile", function ()
 
     });
 
-    describe("masks on sources feature", function ()
+    describe("glob patterns with the --sources options", function ()
     {
         beforeEach(async function ()
         {
@@ -360,26 +383,33 @@ describe("CloneFile", function ()
             }
         });
 
-        it("should copy all txt in cool-1 to the output directory", function ()
+        it("should fail to copy all txt in cool-1 to the output directory", function ()
         {
             const {stdout, stderr} = shell.exec(`node ${cloneFile} --sources *.txt output`, {silent: false});
 
             expect(stdout)
-                .to.contain("The pattern \"*.txt\" does not match any file or directory");
+                .to.contain("0 items cloned");
 
             expect(stderr)
-                .to.contain("Error: No source detected in arguments");
+                .to.contain("Error: The folder")
+                .to.contain("does not exist");
+        });
+
+        it("should copy all txt in work to the output directory", function ()
+        {
+            const {stdout} = shell.exec(`node ${cloneFile} --sources *.txt output --force`, {silent: false});
+
+            expect(stdout)
+                .to.contain("/output/output.txt")
+                .to.contain("1 item cloned");
         });
 
         it("should fail to find some txt in the current directory", function ()
         {
-            const {stdout, stderr} = shell.exec(`node ${cloneFile} --sources *.text output`, {silent: false});
+            const {stdout} = shell.exec(`node ${cloneFile} --sources *.text output`, {silent: false});
 
             expect(stdout)
                 .to.contain(`The pattern "*.text" does not match any file or directory`);
-
-            expect(stderr)
-                .to.contain("Error: No source detected in arguments");
         });
 
         it("should fail to copy all txt in the work directory to output", function ()
@@ -387,12 +417,12 @@ describe("CloneFile", function ()
             const {stderr} = shell.exec(`node ${cloneFile} --sources work/cool-1/*.txt output`, {silent: false});
 
             expect(stderr)
-                .to.contain(`Use --force or --recursive options to create it. Skipping`);
+                .to.contain(`Use --force option to allow the action`);
         });
 
         it("should copy all txt in the cool-1 directory to the output directory", function ()
         {
-            const {stdout} = shell.exec(`node ${cloneFile} --sources work/cool-1/*.txt output --recursive`, {silent: false});
+            const {stdout} = shell.exec(`node ${cloneFile} --sources work/cool-1/*.txt output --force`, {silent: false});
 
             expect(stdout)
                 .to.contain(`/output/aaa.txt`)
@@ -403,45 +433,149 @@ describe("CloneFile", function ()
 
         it("should copy all txt in the cool-1 directory and sub-directories to the output directory", function ()
         {
-            const {stdout} = shell.exec(`node ${cloneFile} --sources work/cool-1/**/*.txt output --recursive`, {silent: false});
+            const {stdout} = shell.exec(`node ${cloneFile} --sources work/cool-1/**/*.txt output --force`, {silent: false});
 
             expect(stdout)
-                .to.contain(`/output/work/cool-1/aaa.txt`)
-                .to.contain(`/output/work/cool-1/bbb.txt`)
-                .to.contain(`/output/work/cool-1/ccc.txt`)
-                .to.contain(`/output/work/cool-1/stuff/ddd.txt`)
-                .to.contain(`/output/work/cool-1/stuff/eee.txt`)
-                .to.contain(`/output/work/cool-1/stuff/fff.txt`)
-                .to.contain(`/output/work/cool-1/stuff/out/ggg.txt`)
-                .to.contain(`/output/work/cool-1/stuff/out/hhh.txt`)
-                .to.contain(`/output/work/cool-1/stuff/out/iii.txt`)
-                .to.contain(`/output/work/cool-1/stuff/out/there/jjj.txt`)
-                .to.contain(`/output/work/cool-1/stuff/out/there/kkk.txt`)
-                .to.contain(`/output/work/cool-1/stuff/out/there/kkk.txt`)
+                .to.contain(`/work/cool-1/aaa.txt`)
+                .to.contain(`/work/cool-1/bbb.txt`)
+                .to.contain(`/work/cool-1/ccc.txt`)
+                .to.contain(`/work/cool-1/stuff/ddd.txt`)
+                .to.contain(`/work/cool-1/stuff/eee.txt`)
+                .to.contain(`/work/cool-1/stuff/fff.txt`)
+                .to.contain(`/work/cool-1/stuff/out/ggg.txt`)
+                .to.contain(`/work/cool-1/stuff/out/hhh.txt`)
+                .to.contain(`/work/cool-1/stuff/out/iii.txt`)
+                .to.contain(`/work/cool-1/stuff/out/there/jjj.txt`)
+                .to.contain(`/work/cool-1/stuff/out/there/kkk.txt`)
+                .to.contain(`/work/cool-1/stuff/out/there/kkk.txt`)
                 .to.contain(`12 items cloned`);
         });
 
         it("should copy all txt in all cool directories and sub-directories to the output directory", function ()
         {
-            const {stdout} = shell.exec(`node ${cloneFile} --sources work/cool-1/**/*.txt --sources work/cool-2/**/*.txt --sources work/cool-3/**/*.txt output --recursive`, {silent: false});
+            const {stdout} = shell.exec(`node ${cloneFile} --sources work/cool-1/**/*.txt --sources work/cool-2/**/*.txt --sources work/cool-3/**/*.txt output --force`, {silent: false});
 
             expect(stdout)
                 .to.contain(`The pattern "work/cool-3/**/*.txt" does not match any file or directory`)
-                .to.contain(`/output/work/cool-1/aaa.txt`)
-                .to.contain(`/output/work/cool-1/bbb.txt`)
-                .to.contain(`/output/work/cool-1/ccc.txt`)
-                .to.contain(`/output/work/cool-1/stuff/ddd.txt`)
-                .to.contain(`/output/work/cool-1/stuff/eee.txt`)
-                .to.contain(`/output/work/cool-1/stuff/fff.txt`)
-                .to.contain(`/output/work/cool-1/stuff/out/ggg.txt`)
-                .to.contain(`/output/work/cool-1/stuff/out/hhh.txt`)
-                .to.contain(`/output/work/cool-1/stuff/out/iii.txt`)
-                .to.contain(`/output/work/cool-1/stuff/out/there/jjj.txt`)
-                .to.contain(`/output/work/cool-1/stuff/out/there/kkk.txt`)
-                .to.contain(`/output/work/cool-1/stuff/out/there/kkk.txt`)
+                .to.contain(`/work/cool-1/aaa.txt`)
+                .to.contain(`/work/cool-1/bbb.txt`)
+                .to.contain(`/work/cool-1/ccc.txt`)
+                .to.contain(`/work/cool-1/stuff/ddd.txt`)
+                .to.contain(`/work/cool-1/stuff/eee.txt`)
+                .to.contain(`/work/cool-1/stuff/fff.txt`)
+                .to.contain(`/work/cool-1/stuff/out/ggg.txt`)
+                .to.contain(`/work/cool-1/stuff/out/hhh.txt`)
+                .to.contain(`/work/cool-1/stuff/out/iii.txt`)
+                .to.contain(`/work/cool-1/stuff/out/there/jjj.txt`)
+                .to.contain(`/work/cool-1/stuff/out/there/kkk.txt`)
+                .to.contain(`/work/cool-1/stuff/out/there/kkk.txt`)
                 .to.contain(`24 items cloned`);
+        });
 
+    });
 
+    describe("with glob patterns (sources) mixed with regular references (source)", function ()
+    {
+        beforeEach(async function ()
+        {
+            if (fs.existsSync("output"))
+            {
+                fs.rmSync("output", {recursive: true});
+            }
+        });
+
+        it(`should copy all txt in work/cool1 and work/cool2 from a glob and also copy my-dir and the-dir directories to the output directory`, function ()
+        {
+            const {stdout} = shell.exec(`node ${cloneFile} --sources work/cool-1/**/*.txt --sources work/cool-2/*.txt --source work/my-dir --source work/the-dir output --force`, {silent: false});
+
+            expect(stdout)
+                .to.contain("/work/cool-1/aaa.txt")
+                .to.contain("/work/cool-1/bbb.txt")
+                .to.contain("/work/cool-1/ccc.txt")
+                .to.contain("/work/cool-1/stuff/ddd.txt")
+                .to.contain("/work/cool-1/stuff/eee.txt")
+                .to.contain("/work/cool-1/stuff/fff.txt")
+                .to.contain("/work/cool-1/stuff/out/ggg.txt")
+                .to.contain("/work/cool-1/stuff/out/hhh.txt")
+                .to.contain("/work/cool-1/stuff/out/iii.txt")
+                .to.contain("/work/cool-1/stuff/out/there/jjj.txt")
+                .to.contain("/work/cool-1/stuff/out/there/kkk.txt")
+                .to.contain("/work/cool-1/stuff/out/there/lll.txt")
+                .to.contain("/work/cool-2/aaa.txt")
+                .to.contain("/work/cool-2/bbb.txt")
+                .to.contain("/work/cool-2/ccc.txt")
+                .to.contain("/work/my-dir/my-file1.txt")
+                .to.contain("/work/my-dir/some/more/depth/file-1.txt")
+                .to.contain("/work/my-dir/some/more/depth/file-2.txt")
+                .to.contain("20 items cloned");
+        });
+
+        it("should fail to find some txt in the current directory", function ()
+        {
+            const {stdout} = shell.exec(`node ${cloneFile} --sources *.text output`, {silent: false});
+
+            expect(stdout)
+                .to.contain(`The pattern "*.text" does not match any file or directory`);
+        });
+
+        it("should fail to copy all txt in the work directory to output", function ()
+        {
+            const {stderr} = shell.exec(`node ${cloneFile} --sources work/cool-1/*.txt output`, {silent: false});
+
+            expect(stderr)
+                .to.contain(`Use --force option to allow the action`);
+        });
+
+        it("should copy all txt in the cool-1 directory to the output directory", function ()
+        {
+            const {stdout} = shell.exec(`node ${cloneFile} --sources work/cool-1/*.txt output --force`, {silent: false});
+
+            expect(stdout)
+                .to.contain(`/output/aaa.txt`)
+                .to.contain(`/output/bbb.txt`)
+                .to.contain(`/output/ccc.txt`)
+                .to.contain(`3 items cloned`);
+        });
+
+        it("should copy all txt in the cool-1 directory and sub-directories to the output directory", function ()
+        {
+            const {stdout} = shell.exec(`node ${cloneFile} --sources work/cool-1/**/*.txt output --force`, {silent: false});
+
+            expect(stdout)
+                .to.contain(`/work/cool-1/aaa.txt`)
+                .to.contain(`/work/cool-1/bbb.txt`)
+                .to.contain(`/work/cool-1/ccc.txt`)
+                .to.contain(`/work/cool-1/stuff/ddd.txt`)
+                .to.contain(`/work/cool-1/stuff/eee.txt`)
+                .to.contain(`/work/cool-1/stuff/fff.txt`)
+                .to.contain(`/work/cool-1/stuff/out/ggg.txt`)
+                .to.contain(`/work/cool-1/stuff/out/hhh.txt`)
+                .to.contain(`/work/cool-1/stuff/out/iii.txt`)
+                .to.contain(`/work/cool-1/stuff/out/there/jjj.txt`)
+                .to.contain(`/work/cool-1/stuff/out/there/kkk.txt`)
+                .to.contain(`/work/cool-1/stuff/out/there/kkk.txt`)
+                .to.contain(`12 items cloned`);
+        });
+
+        it("should copy all txt in all cool directories and sub-directories to the output directory", function ()
+        {
+            const {stdout} = shell.exec(`node ${cloneFile} --sources work/cool-1/**/*.txt --sources work/cool-2/**/*.txt --sources work/cool-3/**/*.txt output --force`, {silent: false});
+
+            expect(stdout)
+                .to.contain(`The pattern "work/cool-3/**/*.txt" does not match any file or directory`)
+                .to.contain(`/work/cool-1/aaa.txt`)
+                .to.contain(`/work/cool-1/bbb.txt`)
+                .to.contain(`/work/cool-1/ccc.txt`)
+                .to.contain(`/work/cool-1/stuff/ddd.txt`)
+                .to.contain(`/work/cool-1/stuff/eee.txt`)
+                .to.contain(`/work/cool-1/stuff/fff.txt`)
+                .to.contain(`/work/cool-1/stuff/out/ggg.txt`)
+                .to.contain(`/work/cool-1/stuff/out/hhh.txt`)
+                .to.contain(`/work/cool-1/stuff/out/iii.txt`)
+                .to.contain(`/work/cool-1/stuff/out/there/jjj.txt`)
+                .to.contain(`/work/cool-1/stuff/out/there/kkk.txt`)
+                .to.contain(`/work/cool-1/stuff/out/there/kkk.txt`)
+                .to.contain(`24 items cloned`);
         });
 
     });
