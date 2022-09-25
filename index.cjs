@@ -24,7 +24,7 @@ const {
     normaliseRealPath
 } = require("@thimpat/libutils");
 
-const argv = minimist(process.argv.slice(2), {boolean: ["recursive", "silent", "force"]});
+const argv = minimist(process.argv.slice(2), {boolean: ["silent", "force"]});
 
 const method = fs.copyFileSync ? "new" : "stream";
 
@@ -583,6 +583,12 @@ const init = async () =>
         {
             displayLog(`The option "--overwrite" is deprecated. Use --force instead`, {fg: "orange"});
             argv.force = argv.force || argv.overwrite;
+        }
+
+        if (argv.hasOwnProperty("recursive"))
+        {
+            displayLog(`The option "--recursive" is deprecated. Use --force instead`, {fg: "orange"});
+            argv.force = argv.force || argv.recursive;
         }
 
         // --------------------
