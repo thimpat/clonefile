@@ -1,5 +1,12 @@
 #!/usr/bin/env node
 
+/**
+ * @typedef SourceDetail
+ * @property {string} filepath Relative path to file
+ * @property {string} commonSourceDir Common directory to subtract from final calculation
+ */
+
+
 const fs = require("fs-extra");
 const path = require("path");
 
@@ -17,7 +24,7 @@ const {
     normaliseRealPath
 } = require("@thimpat/libutils");
 
-const argv = minimist(process.argv.slice(2), {boolean: ["recursive", "silent", "force"]});
+const argv = minimist(process.argv.slice(2), {boolean: ["silent", "force"]});
 
 const method = fs.copyFileSync ? "new" : "stream";
 
@@ -59,6 +66,12 @@ const displayError = (message, style = {fg: "red"}) =>
     console.error(toAnsi.getTextFromColor("Error: " + message, style));
 };
 
+/**
+ * Copy a file
+ * @param source
+ * @param dest
+ * @param isRecursive
+ */
 const copyFile = (source, dest, isRecursive = true) =>
 {
     try
@@ -79,31 +92,13 @@ const copyFile = (source, dest, isRecursive = true) =>
         }
 
         displayLog(`${source} => ${dest}`, {fg: "yellow"});
+        return true;
     }
     catch (e)
     {
         displayError(e.message);
     }
-};
-
-const copyFolder = (source, dest) =>
-{
-    try
-    {
-        const err = fs.copySync(source, dest, {overwrite: true});
-        if (err)
-        {
-            displayError(err.message);
-            return;
-        }
-
-        displayLog(`${source} => ${dest}`, {fg: "green"});
-    }
-    catch (e)
-    {
-        displayError({lid: 1000}, e.message);
-    }
-
+    return false;
 };
 
 /**
@@ -159,7 +154,12 @@ const getEntityStatus = (filepath) =>
     return res;
 };
 
-function getTargets()
+/**
+ * Retrieve targets from command line
+ * @param argv
+ * @returns {*|*[]}
+ */
+function determineTargets(argv)
 {
     let targets = argv._ || [];
 
@@ -177,18 +177,346 @@ function getTargets()
 
     if (!targets.length)
     {
-        displayError(`No targets given`);
-        process.exitCode = process.exitCode || 1;
-        return null;
+        displayError(`No detected targets in arguments (You can use --target to explicitely specifying some)`);
+        return [];
     }
+
     return targets;
 }
 
-function cloneToTargets(targets, {source, commonSourceDir})
+/**
+ * Returns more detailed info source file related
+ * @param src
+ * @returns {{filepath: (string|*), commonSourceDir: (string|*)}|undefined}
+ */
+function getDetailedSource(src)
+{
+    try
+    {
+        const result = normaliseRealPath(src);
+        if (!result.success)
+        {
+            displayError(`The source file "${src}" does not exist, is inaccessible or is invalid`);
+            return;
+        }
+
+        return {
+            filepath       : result.filepath,
+        };
+    }
+    catch (e)
+    {
+        console.error({lid: 4281}, e.message);
+    }
+
+}
+
+/**
+ *
+ * @returns {SourceDetail[]}
+ */
+function determineSourcesFromGlobs(patterns, commonDir = "")
+{
+    const sources = [];
+
+    try
+    {
+        if (patterns)
+        {
+            if (!Array.isArray(patterns))
+            {
+                patterns = [patterns];
+            }
+
+            for (let i = 0; i < patterns.length; ++i)
+            {
+                let commonSourceDir = commonDir;
+                const pattern = patterns[i] || "";
+                if (!pattern)
+                {
+                    displayLog(`Empty pattern detected`);
+                    continue;
+                }
+
+                let srcs = glob.sync(pattern, {
+                    dot  : true,
+                });
+
+                if (!srcs.length)
+                {
+                    displayLog(`The pattern "${pattern}" does not match any file or directory`);
+                    continue;
+                }
+
+                srcs = [...new Set(srcs)];
+
+                commonSourceDir = commonSourceDir || calculateCommon(srcs);
+                commonSourceDir = normaliseRealPath(commonSourceDir).filepath;
+
+                srcs = srcs
+                    .map(src =>
+                    {
+                        const res = getDetailedSource(src);
+                        res.commonSourceDir = commonSourceDir;
+                        return res;
+                    })
+                    // Remove undefined
+                    .filter(element => !!element)
+                    // Remove directory (Do not use nodir on
+                    // glob as it would be too soon to calculate the common dir)
+                    .filter(element => {
+                        return fs.lstatSync(element.filepath).isFile();
+                    });
+                sources.push(...srcs);
+            }
+
+            if (sources.length > LIMIT_FILES)
+            {
+                if (!argv.force)
+                {
+                    displayError(`More than ${LIMIT_FILES} files find in pattern. Use --force to allow the process`);
+                    return [];
+                }
+            }
+        }
+    }
+    catch (e)
+    {
+        console.error({lid: 4113}, e.message);
+    }
+
+    return sources;
+}
+
+/**
+ * Determine sources from the source argument that can be a single file
+ * or an array
+ * @param sourceArray
+ * @returns {*[]}
+ */
+function determineSourcesFromArrays(sourceArray)
+{
+    const sources = [];
+    try
+    {
+        if (sourceArray)
+        {
+            sourceArray = Array.isArray(sourceArray) ? sourceArray : [sourceArray];
+            sourceArray = sourceArray.map(src =>
+            {
+                return getDetailedSource(src);
+            }).filter(element => !!element);
+
+            for (let i = 0; i < sourceArray.length; ++i)
+            {
+                const item = sourceArray[i];
+                const source = item.filepath;
+                if (!fs.existsSync(source))
+                {
+                    displayError(`Could not find ${source}`);
+                    continue;
+                }
+
+                const stats = fs.lstatSync(source);
+                if (stats.isFile())
+                {
+                    let dir = path.parse(source).dir;
+                    dir = normaliseRealPath(dir).filepath;
+                    item.commonSourceDir = dir;
+                    sources.push(item);
+                    continue;
+                }
+
+                if (!stats.isDirectory())
+                {
+                    // Not a directory neither
+                    displayError(`The source "${source}" is neither a file nor a directory. Skipping`, {fg: "red"});
+                    continue;
+                }
+
+                let results = determineSourcesFromGlobs(source + "**", source);
+                results.forEach(src =>
+                {
+                    src.commonSourceDir = source;
+                });
+                sources.push(...results);
+            }
+
+        }
+    }
+    catch (e)
+    {
+        console.error({lid: 4719}, e.message);
+    }
+
+    return sources;
+}
+
+/**
+ * Retrieve sources from command line
+ * @param argv
+ * @returns {*[]}
+ */
+function determineSources(argv)
+{
+    const sources = [];
+    try
+    {
+        let results = determineSourcesFromGlobs(argv.sources);
+        if (results.length)
+        {
+            sources.push(...results);
+        }
+
+        results = determineSourcesFromArrays(argv.source);
+        if (results.length)
+        {
+            sources.push(...results);
+        }
+
+        if (!argv.sources && !argv.source && !sources.length)
+        {
+            if (!argv._ || !argv._.length)
+            {
+                displayError(`No detected source in arguments (You can use --source, --sources or pass at least one argument)`);
+                return [];
+            }
+
+            const source = argv._.shift();
+            results = determineSourcesFromArrays(source);
+            if (results.length)
+            {
+                sources.push(...results);
+            }
+        }
+
+    }
+    catch (e)
+    {
+        console.error({lid: 4573}, e.message);
+    }
+
+    return sources;
+}
+
+/**
+ * Copy a file to a folder
+ * @param source
+ * @param target
+ * @param commonSourceDir
+ * @returns {boolean}
+ */
+function copyFileToFile(source, target, {force = false} = {})
+{
+    try
+    {
+        if (!force)
+        {
+            if (fs.existsSync(target))
+            {
+                displayError(`The destination "${target}" for the file "${source}" already exists. Use --force option to overwrite. Skipping`, {fg: "red"});
+                return false;
+            }
+
+            let dir = path.parse(target).dir;
+            dir = normalisePath(dir, {isFolder: true});
+            if (!fs.existsSync(dir))
+            {
+                displayError(`The folder "${dir}" does not exist. Use --force option to allow the action. Skipping`, {fg: "red"});
+                return false;
+            }
+
+        }
+
+        return copyFile(source, target);
+    }
+    catch (e)
+    {
+        console.error({lid: 4267}, e.message);
+    }
+
+    return false;
+}
+
+/**
+ * Copy a file to a folder
+ * @param source
+ * @param targetFolder
+ * @param commonSourceDir
+ * @param force
+ * @returns {boolean}
+ */
+function copyFileToFolder(source, targetFolder, commonSourceDir, {force = false} = {})
+{
+    try
+    {
+        const destinationFile = source.split(commonSourceDir)[1];
+        const dest = joinPath(targetFolder, destinationFile);
+        const destinationPath = resolvePath(dest);
+
+        return copyFileToFile(source, destinationPath, {force});
+    }
+    catch (e)
+    {
+        console.error({lid: 4231}, e.message);
+    }
+
+    return false;
+}
+
+/**
+ * Copy a file or a directory to a target directory
+ * @param source
+ * @param target
+ * @param commonSourceDir
+ * @param force
+ * @param targetStatus
+ * @returns {boolean}
+ */
+function copySourceToTarget(source, target, commonSourceDir, {force = false, targetStatus = null} = {})
+{
+    try
+    {
+        targetStatus = targetStatus || getEntityStatus(target);
+        if (resolvePath(source) === resolvePath(target))
+        {
+            ++errorFounds;
+            displayError(`Cannot clone source into itself: ${target}`);
+            return false;
+        }
+
+        // Copying a file to a directory
+        if (targetStatus.isFile)
+        {
+            return copyFileToFile(source, target, {force});
+        }
+        else if (targetStatus.isDir)
+        {
+            return copyFileToFolder(source, target, commonSourceDir, {force});
+        }
+
+        displayError(`The source "${source}" is neither a file nor a directory. Skipping`, {fg: "red"});
+    }
+    catch (e)
+    {
+        console.error({lid: 4215}, e.message);
+    }
+
+    return false;
+}
+
+/**
+ * Copy a file or a directory to all the specified targets
+ * @param targets
+ * @param source
+ * @param commonSourceDir
+ * @param force
+ * @param left
+ * @returns {{count: number, errorFounds: number}}
+ */
+function copyDetailedSourceToTargets(targets, {source, commonSourceDir, force, left = 0})
 {
     const n = targets.length;
-
-    let sourceStatus = getEntityStatus(source);
 
     for (let i = 0; i < n; ++i)
     {
@@ -196,78 +524,21 @@ function cloneToTargets(targets, {source, commonSourceDir})
         try
         {
             target = resolvePath(target);
-
             let targetStatus = getEntityStatus(target);
-            if (targetStatus.isDir)
+
+            if (!copySourceToTarget(source, target, commonSourceDir, {force, targetStatus}))
             {
-                const dest = source.split(commonSourceDir)[1];
-                if (dest)
-                {
-                    target = resolvePath(path.join(target, dest));
-                }
-
-                // If dest is a directory, we lose the forward slash, so we need to put it back
-                if (sourceStatus.isDir)
-                {
-                    target = normalisePath(target, {isFolder: true});
-                }
-
-                targetStatus = getEntityStatus(target);
-            }
-
-            if (targetStatus.isFile)
-            {
-                // If the file exists already, we reject
-                if (targetStatus.exists)
-                {
-                    if (!argv.force)
-                    {
-                        displayError(`The destination "${target}" already exists. Use --force option to overwrite. Skipping`, {fg: "red"});
-                        continue;
-                    }
-                }
-
-                // If the parent directory for this file does not exist, we reject it
-                if (!fs.existsSync(targetStatus.dirPath))
-                {
-                    if (!(argv.force || argv.recursive))
-                    {
-                        displayError(`The folder "${targetStatus.dirPath}" for "${target}" does not exist. Use --force or --recursive options to create it. Skipping`, {fg: "red"});
-                        continue;
-                    }
-                }
-            }
-
-            // Source and destination are the same
-            if (resolvePath(source) === resolvePath(target))
-            {
-                ++errorFounds;
-                displayError(`Cannot clone source into itself: ${target}`);
                 continue;
             }
 
-            if (sourceStatus.isFile)
+            if (targetStatus.isFile && left > 0)
             {
-                copyFile(source, target, argv.force || argv.recursive );
-            }
-            else
-            {
-                if (targetStatus.isFile)
+                if (force)
                 {
-                    if (targetStatus.exists)
-                    {
-                        displayError(`You cannot clone a directory [${source}] into an existing file [${target}].`);
-                    }
-                    else
-                    {
-                        displayError(`You cannot clone a directory [${source}] into a file [${target}].\n Use the --force option to override.`);
-                    }
-                    ++errorFounds;
-                    continue;
+                    displayLog(`${target} is a single file with ${left} more source(s) to copy over this same file`, {fg: "#da2828"});
                 }
-
-                 copyFolder(source, target);
             }
+
             ++count;
         }
         catch (e)
@@ -278,14 +549,45 @@ function cloneToTargets(targets, {source, commonSourceDir})
     return {errorFounds, count};
 }
 
+function cloneSources(sources, targets, {force = false} = {})
+{
+    let allCount = 0, errorFounds = 0, count = 0;
+    try
+    {
+        for (let i = 0; i < sources.length; ++i)
+        {
+            let item = sources[i];
+
+            ({errorFounds, count} = copyDetailedSourceToTargets(targets, {
+                    source         : item.filepath,
+                    commonSourceDir: item.commonSourceDir,
+                    force,
+                    left: sources.length - i - 1
+                })
+            );
+
+            allCount += count;
+        }
+
+        if (errorFounds)
+        {
+            displayError(toAnsi.getTextFromColor(`${errorFounds} ${errorFounds === 1 ? "issue" : "issues"} detected`, {fg: "red"}));
+            process.exitCode = process.exitCode || 10;
+        }
+
+    }
+    catch (e)
+    {
+        console.error({lid: 3451}, e.message);
+    }
+
+    return {count: allCount};
+}
+
 const init = async () =>
 {
     try
     {
-        process.exitCode = 0;
-
-        let sources = [], source = "";
-
         if (argv.hasOwnProperty("verbose"))
         {
             displayLog(`The option "--verbose" is deprecated. Use --silent instead`, {fg: "orange"});
@@ -297,6 +599,15 @@ const init = async () =>
             argv.force = argv.force || argv.overwrite;
         }
 
+        if (argv.hasOwnProperty("recursive"))
+        {
+            displayLog(`The option "--recursive" is deprecated. Use --force instead`, {fg: "orange"});
+            argv.force = argv.force || argv.recursive;
+        }
+
+        // --------------------
+        // Version and help
+        // --------------------
         if (argv.v || argv.version)
         {
             console.log(packageJson.version);
@@ -315,142 +626,30 @@ const init = async () =>
             argv.overwrite = true;
         }
 
-        let patterns = argv.sources;
-        if (patterns)
+        // --------------------
+        // Determine source folders and files
+        // --------------------
+        const sources = determineSources(argv);
+        if (!sources || !sources.length)
         {
-            if (!Array.isArray(patterns))
-            {
-                patterns = [patterns];
-            }
-
-            for (let i = 0; i < patterns.length; ++i)
-            {
-                const pattern = patterns[i] || "";
-                if (!pattern)
-                {
-                    displayLog(`Empty pattern detected`);
-                    continue;
-                }
-
-                const srcs = glob.sync(pattern, {
-                    dot: true
-                });
-
-                if (!srcs.length)
-                {
-                    displayLog(`The pattern "${pattern}" does not match any file or directory`);
-                    continue;
-                }
-
-                sources.push(...srcs);
-            }
-
-            sources = [...new Set(sources)];
-
-            if (sources.length > LIMIT_FILES)
-            {
-                if (!argv.force)
-                {
-                    displayError(`More than ${LIMIT_FILES} files find in pattern. Use --force to allow the process`);
-                    return;
-                }
-            }
-        }
-
-        if (argv.source)
-        {
-            source = argv.source;
-            if (source)
-            {
-                sources.push(source);
-            }
-        }
-
-        if (!argv.sources && !argv.sources)
-        {
-            if (argv._ && argv._.length)
-            {
-                source = argv._[0];
-                sources.push(source);
-                argv._ = argv._.slice(1);
-            }
-        }
-
-        if (!sources.length)
-        {
-            displayError(`No source detected in arguments`);
-            process.exitCode = 1;
+            process.exitCode = process.exitCode || 1;
             return;
         }
 
-        const validSources = [];
-        // Try to find early the real nature of every given source
-        for (let i = 0; i < sources.length; ++i)
+        // --------------------
+        // Determine targets folders and files
+        // --------------------
+        const targets = determineTargets(argv);
+        if (!targets.length)
         {
-            let source = sources[i] || "";
-            source = source.trim();
-            const checkSource = normaliseRealPath(source);
-            if (!checkSource.success)
-            {
-                displayError(`The source file "${source}" does not exist, is inaccessible or is invalid`);
-                continue;
-            }
-
-            source = checkSource.filepath;
-            // Determine if the source does not have other issues
-            const sourceStatus = getEntityStatus(source);
-            if (sourceStatus.unhandledType)
-            {
-                displayError(`The source file "${source}" is not a file/directory`);
-                process.exitCode = process.exitCode || 2;
-                continue;
-            }
-
-            source = resolvePath(source);
-            validSources.push(source);
-        }
-
-        if (!validSources.length)
-        {
-            process.exitCode = process.exitCode || 3;
+            process.exitCode = process.exitCode || 2;
             return;
         }
 
-        let commonSourceDir = calculateCommon(validSources);
-        commonSourceDir = resolvePath(commonSourceDir);
-
-        for (let i = 0; i < validSources.length; ++i)
-        {
-            let source = validSources[i];
-
-            // --------------------
-            // Determine targets folders and files
-            // --------------------
-            let targets = getTargets();
-            if (!targets)
-            {
-                continue;
-            }
-
-            // --------------------
-            // Start cloning
-            // --------------------
-            let {errorFounds, count} = cloneToTargets(targets, {source, commonSourceDir});
-
-            if (!count)
-            {
-                if (errorFounds)
-                {
-                    displayError(toAnsi.getTextFromColor(`${errorFounds} ${errorFounds === 1 ? "issue" : "issues"} detected`, {fg: "red"}));
-                    process.exitCode = process.exitCode || 1;
-                    return;
-                }
-
-                displayLog(`No file copied`, {fg: "gray"});
-                process.exitCode = process.exitCode || 0;
-                return;
-            }
-        }
+        // --------------------
+        // Start cloning
+        // --------------------
+        cloneSources(sources, targets, {force: argv.force});
 
         const message = `${count} ${count === 1 ? "item" : "items"} cloned`;
         displayLog(``.padEnd(message.length, "-"), {fg: "orange"});

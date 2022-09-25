@@ -97,4 +97,10 @@ file-1.txt
 my-file1.txt
 *.text
 /my-dir-*
-.run//test/
+.run/
+/test/
+/.github/
+/.run/
+/.nycrc
+
+/bump.js

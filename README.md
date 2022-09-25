@@ -93,7 +93,7 @@ $> clonefile --force sourcedir/ my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/
 
 <br/>
 
-#### Clone multiple files from the current directory to multiple directories with the --sources options (mandatory)
+#### Clone multiple files from a glob pattern to multiple directories with the --sources options (mandatory)
 
 ```shell
 $> clonefile --force --sources *.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/  
@@ -137,23 +137,83 @@ $> clonefile --force --sources *.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3
 
 <br/>
 
+
+---
+<br/>
+
+#### Clone files using multiple glob patterns to multiple directories
+
+```shell
+$> clonefile --force --sources *.txt --sources ./sowehere/ --sources ../another-location/*.png my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/  
+```
+
+<br/>
+
+---
+
+#### Clone multiple files and folders from multiple locations and files and folders from multiple glob patterns to multiple directories
+
+```shell
+$> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/my-dir/ --sources *.txt --sources /another-location/*.png my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/  
+```
+
+> ###### "_my-file-1_" and "_path1/my-file-2_" are regular files and will be copied                       to "my-dest-dir-1/", "my-dest-dir-2/", "my-dest-dir-3/"
+> 
+> ---
+> 
+> ###### _"path1/my-dir/"_ is a directory that will be copied                                         to "my-dest-dir-1/", "my-dest-dir-2/", "my-dest-dir-3/" 
+> 
+> ---
+> 
+> ###### _"*.txt"_ will copy all .txt in the current directory                                        to "my-dest-dir-1/", "my-dest-dir-2/", "my-dest-dir-3/"
+> 
+> ---
+> 
+> ###### "_/another-location/*.png_" my-dest-dir-1/ will copy all .png in /another-location           to "my-dest-dir-1/", "my-dest-dir-2/", "my-dest-dir-3/"
+> 
+> ---
+
+<br/>
+
 ---
 
 ## Options
 
 
-| **Options**   | **default** | **Expect**  | **Description**                          | 
-|---------------|-------------|-------------|------------------------------------------|
-| --overwrite   | true        | boolean     | _Whether to overwrite destination_       |
-| --recursive   | false       | boolean     | _create target directories if necessary_ |
-| --silent      | false       | boolean     | _Whether to display messages_            |
-| --force       | false       | boolean     | _To allow cloning a directory_           |
-| --sources     | ""          | string      | _Pattern to select files to copy_        |
-| --source      | ""          | string      | _File path (not pattern) to copy_        |
-| --target      | ""          | string      | _Destination files or folders_           |
-
-
+| **Options**                | **default** | **Expect**  | **Description**                              | 
+|----------------------------|-------------|-------------|----------------------------------------------|
+| --silent                   | false       | boolean     | _Whether to display messages_                |
+| --sources                  | ""          | string      | _Glob Pattern to select files to copy_       |
+| --source                   | ""          | string      | _File or directory to copy_                  |
+| --target                   | ""          | string      | _Destination files or folders_               |
+| ~~--overwrite~~ (obsolete) | ~~true~~    | ~~boolean~~ | ~~_Whether to overwrite destination_~~       |
+| ~~--recursive~~ (obsolete) | ~~false~~   | ~~boolean~~ | ~~_create target directories if necessary_~~ |
+| --force    **              | false       | boolean     | _To allow cloning a directory_               |
 
 <br/>
 
+> ##### ** The option --force replaces both --overwrite and --recursive
 
+<br/>
+
+## Changelog
+
+##### current:
+*  Add various fixes
+*  Deprecate the --recursive option with --force
+*  Allow selecting multiple sources with the --source option
+
+##### 2.1.1:
+*  Do not stop at the first error
+
+##### 1.1.3:
+*  Make --force option automatically be --recursive and --overwrite
+
+##### 1.1.0:
+*  Allow cloning a directory
+*  Replace the --verbose option with --silent
+*  Fix cloning when options misplaced
+
+
+
+---
