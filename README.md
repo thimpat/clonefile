@@ -93,7 +93,7 @@ $> clonefile --force sourcedir/ my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/
 
 <br/>
 
-#### Clone multiple files from the current directory to multiple directories with the --sources options (mandatory)
+#### Clone multiple files from a glob pattern to multiple directories with the --sources options (mandatory)
 
 ```shell
 $> clonefile --force --sources *.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/  
@@ -141,11 +141,37 @@ $> clonefile --force --sources *.txt my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3
 ---
 <br/>
 
-#### Clone multiple files and folders from multiple locations to multiple directories
+#### Clone files using multiple glob patterns to multiple directories
 
 ```shell
 $> clonefile --force --sources *.txt --sources ./sowehere/ --sources ../another-location/*.png my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/  
 ```
+
+<br/>
+
+---
+
+#### Clone multiple files and folders from multiple locations and files and folders from multiple glob patterns to multiple directories
+
+```shell
+$> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/my-dir/ --sources *.txt --sources /another-location/*.png my-dest-dir-1/ my-dest-dir-2/ my-dest-dir-3/  
+```
+
+> ###### "_my-file-1_" and "_path1/my-file-2_" are regular files and will be copied                       to "my-dest-dir-1/", "my-dest-dir-2/", "my-dest-dir-3/"
+> 
+> ---
+> 
+> ###### _"path1/my-dir/"_ is a directory that will be copied                                         to "my-dest-dir-1/", "my-dest-dir-2/", "my-dest-dir-3/" 
+> 
+> ---
+> 
+> ###### _"*.txt"_ will copy all .txt in the current directory                                        to "my-dest-dir-1/", "my-dest-dir-2/", "my-dest-dir-3/"
+> 
+> ---
+> 
+> ###### "_/another-location/*.png_" my-dest-dir-1/ will copy all .png in /another-location           to "my-dest-dir-1/", "my-dest-dir-2/", "my-dest-dir-3/"
+> 
+> ---
 
 <br/>
 
@@ -160,8 +186,8 @@ $> clonefile --force --sources *.txt --sources ./sowehere/ --sources ../another-
 | --recursive   | false       | boolean     | _create target directories if necessary_ |
 | --silent      | false       | boolean     | _Whether to display messages_            |
 | --force       | false       | boolean     | _To allow cloning a directory_           |
-| --sources     | ""          | string      | _Pattern to select files to copy_        |
-| --source      | ""          | string      | _File path (not pattern) to copy_        |
+| --sources     | ""          | string      | _Glob Pattern to select files to copy_   |
+| --source      | ""          | string      | _File or directory to copy_              |
 | --target      | ""          | string      | _Destination files or folders_           |
 
 
