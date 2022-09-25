@@ -8,6 +8,7 @@
   },
   "scripts": {
     "test": "nyc --reporter=lcov --reporter=text-summary mocha --exit --sort --exclude test/lib",
+    "test2": "cross-env ANALOGGER_TEST_PORT=12000 ANALOGGER_LOG_FILE=reporter.log mocha --no-exit --sort --exclude test/lib --reporter ./node_modules/remote-logging/reporter.cjs",
     "demo1": "node index.cjs my-file1.txt file-2.md somewhere/else/ttt.txt somewhere1/ my-dir/ --target simple.txt --recursive"
   },
   "keywords": [
