@@ -180,15 +180,15 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 ## Options
 
 
-| **Options**                | **default** | **Expect**  | **Description**                              | 
-|----------------------------|-------------|-------------|----------------------------------------------|
-| --silent                   | false       | boolean     | _Whether to display messages_                |
-| --sources                  | ""          | string      | _Glob Pattern to select files to copy_       |
-| --source                   | ""          | string      | _File or directory to copy_                  |
-| --target                   | ""          | string      | _Destination files or folders_               |
-| ~~--overwrite~~ (obsolete) | ~~true~~    | ~~boolean~~ | ~~_Whether to overwrite destination_~~       |
-| ~~--recursive~~ (obsolete) | ~~false~~   | ~~boolean~~ | ~~_create target directories if necessary_~~ |
-| --force    **              | false       | boolean     | _To allow cloning a directory_               |
+| **Options**                | **default** | **Expect**  | **Description**                                      | 
+|----------------------------|-------------|-------------|------------------------------------------------------|
+| --silent                   | false       | boolean     | _Whether to display messages_                        |
+| --sources                  | ""          | string      | _Glob Pattern to determine files to copy_            |
+| --source                   | ""          | string      | _Regular file path for files or directories to copy_ |
+| --target                   | ""          | string      | _Destination files or folders_                       |
+| ~~--overwrite~~ (obsolete) | ~~true~~    | ~~boolean~~ | ~~_Whether to overwrite destination_~~               |
+| ~~--recursive~~ (obsolete) | ~~false~~   | ~~boolean~~ | ~~_create target directories if necessary_~~         |
+| --force    **              | false       | boolean     | _To allow cloning a directory_                       |
 
 <br/>
 
