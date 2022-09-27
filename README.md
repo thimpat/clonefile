@@ -26,7 +26,22 @@ $> clonefile [--source] <source> [--target] <target1> <target2>...<targetN>  [op
 $> clonefile --sources <pattern> <target1> <target2>...<targetN>  [options] 
 ```
 
+
 <br/>
+
+
+### Programmatically
+
+```javascript
+const {clone} = require("clonefile");
+
+// "Source" and "target" can be strings or arrays of strings
+clone(source, target, {silent: true, force: true})
+```
+
+<br/>
+
+---
 
 ## Example
 
