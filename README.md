@@ -216,6 +216,9 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 ## Changelog
 
 ##### current:
+*  Import the clone function to copy from code
+
+##### 3.1.0:
 *  Add various fixes
 *  Deprecate the --recursive option with --force
 *  Allow selecting multiple sources with the --source option
