@@ -2,14 +2,15 @@
   "name": "clonefile",
   "version": "3.1.0",
   "description": "Clone file into multiple locations",
-  "main": "./index.cjs",
+  "main": "./src/clonefile.cjs",
   "bin": {
     "clonefile": "index.cjs"
   },
   "scripts": {
     "test": "nyc --reporter=lcov --reporter=text-summary mocha --exit --sort --exclude test/lib",
     "test2": "cross-env ANALOGGER_TEST_PORT=12000 ANALOGGER_LOG_FILE=reporter.log mocha --no-exit --sort --exclude test/lib --reporter ./node_modules/remote-logging/reporter.cjs",
-    "demo1": "node index.cjs my-file1.txt file-2.md somewhere/else/ttt.txt somewhere1/ my-dir/ --target simple.txt --recursive"
+    "demo1": "node index.cjs my-file1.txt file-2.md somewhere/else/ttt.txt somewhere1/ my-dir/ --target simple.txt --recursive",
+    "build": "### to-esm ./src/clonefile.cjs --output ./esm --update-all --keep-external"
   },
   "keywords": [
     "productivity",
@@ -25,7 +26,8 @@
     "mocha": "^10.0.0",
     "nyc": "^15.1.0",
     "remote-logging": "^1.4.4",
-    "shelljs": "^0.8.5"
+    "shelljs": "^0.8.5",
+    "to-esm": "^2.23.2"
   },
   "dependencies": {
     "@thimpat/libutils": "^1.9.5",
@@ -37,6 +39,6 @@
   },
   "type": "commonjs",
   "exports": {
-    "require": "./index.cjs"
+    "require": "./src/clonefile.cjs"
   }
 }
