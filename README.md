@@ -216,6 +216,9 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 ## Changelog
 
 ##### current:
+*  Use clone and cloneGlobs for programmatic copies
+
+##### 3.2.0:
 *  Import the clone function to copy from code
 
 ##### 3.1.0:
