@@ -627,11 +627,26 @@ const cloneFromCLI = (argv) =>
     return false;
 };
 
-const clone = (sources, targets, {silent = false, force = true} = {}) =>
+const cloneGlobs = (sources, targets, {silent = false, force = true} = {}) =>
 {
     try
     {
         const argCli = {sources, targets, silent, force};
+        return cloneFromCLI(argCli);
+    }
+    catch (e)
+    {
+        console.error({lid: 4321}, e.message);
+    }
+
+    return false;
+};
+
+const clone = (source, targets, {silent = false, force = true} = {}) =>
+{
+    try
+    {
+        const argCli = {source, targets, silent, force};
         return cloneFromCLI(argCli);
     }
     catch (e)
@@ -658,4 +673,5 @@ module.exports.cloneSources = cloneSources;
 
 module.exports.cloneFromCLI = cloneFromCLI;
 
+module.exports.cloneGlobs = cloneGlobs;
 module.exports.clone = clone;
