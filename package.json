@@ -1,6 +1,6 @@
 {
   "name": "clonefile",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "description": "Clone file into multiple locations",
   "main": "./src/clonefile.cjs",
   "bin": {
@@ -17,8 +17,8 @@
     "ci"
   ],
   "bugs": {
-    "url" : "https://github.com/thimpat/clonefile/issues",
-    "email" : "thimpat@gmail.com"
+    "url": "https://github.com/thimpat/clonefile/issues",
+    "email": "thimpat@gmail.com"
   },
   "homepage": "https://www.npmjs.com/package/clonefile",
   "repository": {
