@@ -16,6 +16,15 @@
     "productivity",
     "ci"
   ],
+  "bugs": {
+    "url" : "https://github.com/thimpat/clonefile/issues",
+    "email" : "thimpat@gmail.com"
+  },
+  "homepage": "https://www.npmjs.com/package/clonefile",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thimpat/clonefile.git"
+  },
   "author": "Patrice Thimothee",
   "license": "MIT",
   "devDependencies": {
