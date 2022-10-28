@@ -241,6 +241,15 @@ function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false, fo
                     continue;
                 }
 
+                if (srcs.length > LIMIT_FILES)
+                {
+                    if (!force)
+                    {
+                        displayError(`More than ${LIMIT_FILES} files find in glob patterns => ${pattern} . Use --force to allow the process`);
+                        return [];
+                    }
+                }
+
                 srcs = [...new Set(srcs)];
 
                 commonSourceDir = commonSourceDir || calculateCommon(srcs);
@@ -268,7 +277,7 @@ function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false, fo
             {
                 if (!force)
                 {
-                    displayError(`More than ${LIMIT_FILES} files find in pattern. Use --force to allow the process`);
+                    displayError(`More than ${LIMIT_FILES} files find in all glob patterns combined. Use --force to allow the process`);
                     return [];
                 }
             }
