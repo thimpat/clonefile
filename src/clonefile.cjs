@@ -29,7 +29,7 @@ const LIMIT_FILES = parseInt(process.env.CLONE_FILE_MAX_PATTERN) || 200;
 
 let errorFounds = 0;
 
-const displayLog = (message, {fg = "yellow",  silent = false} = {}) =>
+const displayLog = (message, {fg = "yellow", silent = false} = {}) =>
 {
     if (silent)
     {
@@ -194,7 +194,7 @@ function getDetailedSource(src)
         }
 
         return {
-            filepath       : result.filepath,
+            filepath: result.filepath,
         };
     }
     catch (e)
@@ -208,7 +208,7 @@ function getDetailedSource(src)
  *
  * @returns {SourceDetail[]}
  */
-function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false} = {})
+function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false, force = false,} = {})
 {
     const sources = [];
 
@@ -232,7 +232,7 @@ function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false} = 
                 }
 
                 let srcs = glob.sync(pattern, {
-                    dot  : true,
+                    dot: true,
                 });
 
                 if (!srcs.length)
@@ -257,7 +257,8 @@ function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false} = 
                     .filter(element => !!element)
                     // Remove directory (Do not use nodir on
                     // glob as it would be too soon to calculate the common dir)
-                    .filter(element => {
+                    .filter(element =>
+                    {
                         return fs.lstatSync(element.filepath).isFile();
                     });
                 sources.push(...srcs);
@@ -265,7 +266,7 @@ function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false} = 
 
             if (sources.length > LIMIT_FILES)
             {
-                if (!argv.force)
+                if (!force)
                 {
                     displayError(`More than ${LIMIT_FILES} files find in pattern. Use --force to allow the process`);
                     return [];
@@ -288,7 +289,7 @@ function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false} = 
  * @param silent
  * @returns {*[]}
  */
-function determineSourcesFromArrays(sourceArray, {silent = false})
+function determineSourcesFromArrays(sourceArray, {silent = false, force = false})
 {
     const sources = [];
     try
@@ -328,7 +329,7 @@ function determineSourcesFromArrays(sourceArray, {silent = false})
                     continue;
                 }
 
-                let results = determineSourcesFromGlobs(source + "**", {commonDir: source, silent});
+                let results = determineSourcesFromGlobs(source + "**", {commonDir: source, silent, force});
                 results.forEach(src =>
                 {
                     src.commonSourceDir = source;
@@ -354,18 +355,18 @@ function determineSourcesFromArrays(sourceArray, {silent = false})
  * @param argvSource
  * @param silent
  */
-function determineSources({argv_ = null, argvSources = null, argvSource = null, silent = false} = {})
+function determineSources({argv_ = null, argvSources = null, argvSource = null, silent = false, force = false} = {})
 {
     const sources = [];
     try
     {
-        let results = determineSourcesFromGlobs(argvSources,  {commondDir: "", silent});
+        let results = determineSourcesFromGlobs(argvSources, {commondDir: "", silent, force});
         if (results.length)
         {
             sources.push(...results);
         }
 
-        results = determineSourcesFromArrays(argvSource,  {silent});
+        results = determineSourcesFromArrays(argvSource, {silent, force});
         if (results.length)
         {
             sources.push(...results);
@@ -380,7 +381,7 @@ function determineSources({argv_ = null, argvSources = null, argvSource = null, 
             }
 
             const source = argv_.shift();
-            results = determineSourcesFromArrays(source,  {silent});
+            results = determineSourcesFromArrays(source, {silent, force});
             if (results.length)
             {
                 sources.push(...results);
@@ -535,7 +536,10 @@ function copyDetailedSourceToTargets(targets, {source, commonSourceDir, force, l
             {
                 if (force)
                 {
-                    displayLog(`${target} is a single file with ${left} more source(s) to copy over this same file`, {fg: "#da2828", silent});
+                    displayLog(`${target} is a single file with ${left} more source(s) to copy over this same file`, {
+                        fg: "#da2828",
+                        silent
+                    });
                 }
             }
 
