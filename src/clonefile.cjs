@@ -576,7 +576,7 @@ function cloneSources(sources, targets, {force = false, silent = false} = {})
                     source         : item.filepath,
                     commonSourceDir: item.commonSourceDir,
                     force,
-                    left: sources.length - i - 1,
+                    left           : sources.length - i - 1,
                     silent
                 })
             );
@@ -608,7 +608,13 @@ const cloneFromCLI = (argv) =>
         // --------------------
         // Determine source folders and files
         // --------------------
-        const sources = determineSources({argv_: argv._, argvSources: argv.sources, argvSource: argv.source});
+        const sources = determineSources({
+            argv_      : argv._,
+            argvSources: argv.sources,
+            argvSource : argv.source,
+            force,
+            silent     : argv.silent
+        });
         if (!sources || !sources.length)
         {
             process.exitCode = process.exitCode || 1;
