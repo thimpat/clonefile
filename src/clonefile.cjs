@@ -25,7 +25,7 @@ const method = fs.copyFileSync ? "new" : "stream";
 
 const packageJson = require("../package.json");
 
-const LIMIT_FILES = parseInt(process.env.CLONE_FILE_MAX_PATTERN) || 200;
+const LIMIT_FILES = parseInt(process.env.CLONE_FILE_MAX_PATTERN) || 5000;
 
 let errorFounds = 0;
 
