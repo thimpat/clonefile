@@ -10,6 +10,8 @@ npm install clonefile [-g]
 
 <br/>
 
+---
+
 ## Usage
 
 ### In a Terminal
@@ -26,9 +28,24 @@ $> clonefile [--source] <source> [--target] <target1> <target2>...<targetN>  [op
 $> clonefile --sources <pattern> <target1> <target2>...<targetN>  [options] 
 ```
 
+
 <br/>
 
-## Example
+
+### Programmatically
+
+```javascript
+const {clone} = require("clonefile");
+
+// "Source" and "target" can be strings or arrays of strings
+clone(source, target, {silent: true, force: true})
+```
+
+<br/>
+
+---
+
+## Examples
 
 <br/>
 
@@ -180,15 +197,15 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 ## Options
 
 
-| **Options**                | **default** | **Expect**  | **Description**                              | 
-|----------------------------|-------------|-------------|----------------------------------------------|
-| --silent                   | false       | boolean     | _Whether to display messages_                |
-| --sources                  | ""          | string      | _Glob Pattern to select files to copy_       |
-| --source                   | ""          | string      | _File or directory to copy_                  |
-| --target                   | ""          | string      | _Destination files or folders_               |
-| ~~--overwrite~~ (obsolete) | ~~true~~    | ~~boolean~~ | ~~_Whether to overwrite destination_~~       |
-| ~~--recursive~~ (obsolete) | ~~false~~   | ~~boolean~~ | ~~_create target directories if necessary_~~ |
-| --force    **              | false       | boolean     | _To allow cloning a directory_               |
+| **Options**                | **default** | **Expect**  | **Description**                                      | 
+|----------------------------|-------------|-------------|------------------------------------------------------|
+| --silent                   | false       | boolean     | _Whether to display messages_                        |
+| --sources                  | ""          | string      | _Glob Pattern to determine files to copy_            |
+| --source                   | ""          | string      | _Regular file path for files or directories to copy_ |
+| --target                   | ""          | string      | _Destination files or folders_                       |
+| ~~--overwrite~~ (obsolete) | ~~true~~    | ~~boolean~~ | ~~_Whether to overwrite destination_~~               |
+| ~~--recursive~~ (obsolete) | ~~false~~   | ~~boolean~~ | ~~_create target directories if necessary_~~         |
+| --force    **              | false       | boolean     | _To allow cloning a directory_                       |
 
 <br/>
 
@@ -199,6 +216,12 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 ## Changelog
 
 ##### current:
+*  Use clone and cloneGlobs for programmatic copies
+
+##### 3.2.0:
+*  Import the clone function to copy from code
+
+##### 3.1.0:
 *  Add various fixes
 *  Deprecate the --recursive option with --force
 *  Allow selecting multiple sources with the --source option
