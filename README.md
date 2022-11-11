@@ -216,6 +216,24 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 ## Changelog
 
 ##### current:
+*  Copy symlinks
+
+
+##### 3.2.5:
+*  Fix --force option not working with cloneGlobs
+
+
+##### 3.2.4:
+*  Review file limits processing (5000 instead of 200)
+   (To increase or reduce that limit, create an environment variable called CLONE_FILE_MAX_PATTERN and pass the 
+   new limit)
+
+##### 3.2.3:
+*  Increase limit files to copy from 200 to 5000
+*  Fix js error in cloneGlobs
+
+
+##### 3.2.1:
 *  Use clone and cloneGlobs for programmatic copies
 
 ##### 3.2.0:
