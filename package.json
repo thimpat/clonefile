@@ -39,7 +39,7 @@
     "to-esm": "^2.23.2"
   },
   "dependencies": {
-    "@thimpat/libutils": "^1.9.5",
+    "@thimpat/libutils": "^1.13.4",
     "fs-extra": "^10.1.0",
     "glob": "^8.0.3",
     "minimist": "^1.2.6",
