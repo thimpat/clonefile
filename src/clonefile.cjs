@@ -18,7 +18,7 @@ const {
     resolvePath,
     isConventionalFolder,
     normalisePath,
-    normaliseRealPath
+    normaliseRealPathV2
 } = require("@thimpat/libutils");
 
 const method = fs.copyFileSync ? "new" : "stream";
@@ -186,15 +186,19 @@ function getDetailedSource(src)
 {
     try
     {
-        const result = normaliseRealPath(src);
-        if (!result.success)
+        const {success, filepath, error} = normaliseRealPathV2(src);
+        if (!success)
         {
+            if (error)
+            {
+                displayError(error.message);
+            }
             displayError(`The source file "${src}" does not exist, is inaccessible or is invalid`);
             return;
         }
 
         return {
-            filepath: result.filepath,
+            filepath,
         };
     }
     catch (e)
@@ -253,12 +257,17 @@ function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false, fo
                 srcs = [...new Set(srcs)];
 
                 commonSourceDir = commonSourceDir || calculateCommon(srcs);
-                commonSourceDir = normaliseRealPath(commonSourceDir).filepath;
+                commonSourceDir = normaliseRealPathV2(commonSourceDir).filepath;
 
                 srcs = srcs
                     .map(src =>
                     {
                         const res = getDetailedSource(src);
+                        if (!res)
+                        {
+                            console.error({lid: 4111}, `Failed to copy [${src}]`);
+                            return null;
+                        }
                         res.commonSourceDir = commonSourceDir;
                         return res;
                     })
@@ -325,7 +334,7 @@ function determineSourcesFromArrays(sourceArray, {silent = false, force = false}
                 if (stats.isFile())
                 {
                     let dir = path.parse(source).dir;
-                    dir = normaliseRealPath(dir).filepath;
+                    dir = normaliseRealPathV2(dir).filepath;
                     item.commonSourceDir = dir;
                     sources.push(item);
                     continue;
