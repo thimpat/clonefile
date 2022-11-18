@@ -206,12 +206,13 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 | ~~--overwrite~~ (obsolete) | ~~true~~    | ~~boolean~~ | ~~_Whether to overwrite destination_~~               |
 | ~~--recursive~~ (obsolete) | ~~false~~   | ~~boolean~~ | ~~_create target directories if necessary_~~         |
 | --force    **              | false       | boolean     | _To allow cloning a directory_                       |
+| --progress                 | false       | boolean     | _Display a progress bar during copy_                 |
 
 <br/>
 
-> ##### ** The option --force replaces both --overwrite and --recursive
+#### --progress
 
-<br/>
+![--progress option example](https://raw.githubusercontent.com/thimpat/demos/main/clonefile/images/progress-during-copy.gif)
 
 ## Changelog
 
