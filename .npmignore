@@ -102,5 +102,5 @@ my-file1.txt
 /.github/
 /.run/
 /.nycrc
-
+/demo/
 /bump.js
