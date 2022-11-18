@@ -9,6 +9,7 @@ const fs = require("fs-extra");
 const path = require("path");
 
 const glob = require("glob");
+const cliProgress = require("cli-progress");
 
 const toAnsi = require("to-ansi");
 const {showHelp} = require("pageterm");
@@ -66,8 +67,9 @@ const displayError = (message, style = {fg: "red"}) =>
  * @param dest
  * @param isRecursive
  * @param silent
+ * @param progressBar
  */
-const copyFile = (source, dest, {isRecursive = true, silent = false} = {}) =>
+const copyFile = (source, dest, {isRecursive = true, silent = false, progressBar = null} = {}) =>
 {
     try
     {
@@ -84,6 +86,12 @@ const copyFile = (source, dest, {isRecursive = true, silent = false} = {}) =>
         else
         {
             fs.copyFileSync(source, dest, fs.constants.F_OK);
+        }
+
+        if (progressBar)
+        {
+            progressBar.update({filename: source, dest});
+            return true;
         }
 
         displayLog(`${source} => ${dest}`, {fg: "yellow", silent});
@@ -423,7 +431,7 @@ function determineSources({argv_ = null, argvSources = null, argvSource = null, 
  * @param commonSourceDir
  * @returns {boolean}
  */
-function copyFileToFile(source, target, {force = false, silent = false} = {})
+function copyFileToFile(source, target, {force = false, silent = false, progressBar = null} = {})
 {
     try
     {
@@ -445,7 +453,7 @@ function copyFileToFile(source, target, {force = false, silent = false} = {})
 
         }
 
-        return copyFile(source, target, {silent});
+        return copyFile(source, target, {silent, progressBar});
     }
     catch (e)
     {
@@ -462,9 +470,10 @@ function copyFileToFile(source, target, {force = false, silent = false} = {})
  * @param commonSourceDir
  * @param force
  * @param silent
+ * @param progressBar
  * @returns {boolean}
  */
-function copyFileToFolder(source, targetFolder, commonSourceDir, {force = false, silent = false} = {})
+function copyFileToFolder(source, targetFolder, commonSourceDir, {force = false, silent = false, progressBar = null} = {})
 {
     try
     {
@@ -472,7 +481,7 @@ function copyFileToFolder(source, targetFolder, commonSourceDir, {force = false,
         const dest = joinPath(targetFolder, destinationFile);
         const destinationPath = resolvePath(dest);
 
-        return copyFileToFile(source, destinationPath, {force, silent});
+        return copyFileToFile(source, destinationPath, {force, silent, progressBar});
     }
     catch (e)
     {
@@ -489,9 +498,16 @@ function copyFileToFolder(source, targetFolder, commonSourceDir, {force = false,
  * @param commonSourceDir
  * @param force
  * @param targetStatus
+ * @param silent
+ * @param progressBar
  * @returns {boolean}
  */
-function copySourceToTarget(source, target, commonSourceDir, {force = false, targetStatus = null, silent = false} = {})
+function copySourceToTarget(source, target, commonSourceDir, {
+    force = false,
+    targetStatus = null,
+    silent = false,
+    progressBar = null
+} = {})
 {
     try
     {
@@ -506,11 +522,11 @@ function copySourceToTarget(source, target, commonSourceDir, {force = false, tar
         // Copying a file to a directory
         if (targetStatus.isFile)
         {
-            return copyFileToFile(source, target, {force, silent});
+            return copyFileToFile(source, target, {force, silent, progressBar});
         }
         else if (targetStatus.isDir)
         {
-            return copyFileToFolder(source, target, commonSourceDir, {force, silent});
+            return copyFileToFolder(source, target, commonSourceDir, {force, silent, progressBar});
         }
 
         displayError(`The source "${source}" is neither a file nor a directory. Skipping`, {fg: "red"});
@@ -531,9 +547,17 @@ function copySourceToTarget(source, target, commonSourceDir, {force = false, tar
  * @param force
  * @param left
  * @param silent
+ * @param progressBar
  * @returns {{count: number, errorFounds: number}}
  */
-function copyDetailedSourceToTargets(targets, {source, commonSourceDir, force, left = 0, silent = false})
+function copyDetailedSourceToTargets(targets, {
+    source,
+    commonSourceDir,
+    force,
+    left = 0,
+    silent = false,
+    progressBar = null
+})
 {
     let count = 0;
     const n = targets.length;
@@ -546,7 +570,7 @@ function copyDetailedSourceToTargets(targets, {source, commonSourceDir, force, l
             target = resolvePath(target);
             let targetStatus = getEntityStatus(target);
 
-            if (!copySourceToTarget(source, target, commonSourceDir, {force, silent, targetStatus}))
+            if (!copySourceToTarget(source, target, commonSourceDir, {force, silent, targetStatus, progressBar}))
             {
                 continue;
             }
@@ -572,11 +596,34 @@ function copyDetailedSourceToTargets(targets, {source, commonSourceDir, force, l
     return {errorFounds, count};
 }
 
-function cloneSources(sources, targets, {force = false, silent = false} = {})
+function cloneSources(sources, targets, {force = false, progress = false, silent = false} = {})
 {
-    let errorFounds = 0, count = 0;
+    let errorFounds = 0, count = 0, progressBar;
     try
     {
+        // --------------------
+        // Create progress bar
+        // --------------------
+        if (progress)
+        {
+            progressBar = new cliProgress.SingleBar({
+                format           : "Copying |" + "{bar}" + "| {percentage}% | {value}/{total} Files | Speed:" +
+                    " {speed} files/second {lastSeparator}{filename}{arrow}{dest}",
+                barCompleteChar  : "\u2588",
+                barIncompleteChar: "\u2591",
+                hideCursor       : true
+            }, cliProgress.Presets.shades_classic);
+
+            progressBar.start(sources.length, 0, {
+                speed: "N/A",
+                arrow: " => ",
+                lastSeparator: "| "
+            });
+            silent = true;
+        }
+
+        const t1 = new Date();
+
         for (let i = 0; i < sources.length; ++i)
         {
             let item = sources[i];
@@ -587,11 +634,36 @@ function cloneSources(sources, targets, {force = false, silent = false} = {})
                     commonSourceDir: item.commonSourceDir,
                     force,
                     left           : sources.length - i - 1,
-                    silent
+                    silent,
+                    progressBar
                 })
             );
 
             count += counted;
+
+            if (!count)
+            {
+                continue;
+            }
+
+            const t2 = new Date();
+
+            // diffTime -> count
+            // 1000
+            const diffTime = t2.getTime() - t1.getTime();
+            const speed = Math.floor(count * 1000 / diffTime);
+
+            if (progressBar)
+            {
+                progressBar.increment();
+                progressBar.update(count, {speed});
+            }
+        }
+
+        if (progressBar)
+        {
+            progressBar.update(sources.length, {lastSeparator: "", filename: "", arrow: "", dest: ""});
+            progressBar.stop();
         }
 
         if (errorFounds)
@@ -613,7 +685,7 @@ const cloneFromCLI = (argv) =>
 {
     try
     {
-        const force = argv.force;
+        const {progress, force, silent} = argv;
 
         // --------------------
         // Determine source folders and files
@@ -623,8 +695,9 @@ const cloneFromCLI = (argv) =>
             argvSources: argv.sources,
             argvSource : argv.source,
             force,
-            silent     : argv.silent
+            silent
         });
+
         if (!sources || !sources.length)
         {
             process.exitCode = process.exitCode || 1;
@@ -644,7 +717,7 @@ const cloneFromCLI = (argv) =>
         // --------------------
         // Start cloning
         // --------------------
-        const {count} = cloneSources(sources, targets, {force, silent: argv.silent});
+        const {count} = cloneSources(sources, targets, {force, progress, silent});
 
         return {count};
     }
@@ -671,11 +744,11 @@ const cloneGlobs = (sources, targets, {silent = false, force = true} = {}) =>
     return false;
 };
 
-const clone = (source, targets, {silent = false, force = true} = {}) =>
+const clone = (source, targets, {silent = false, force = true, progress = false} = {}) =>
 {
     try
     {
-        const argCli = {source, targets, silent, force};
+        const argCli = {source, targets, silent, force, progress};
         return cloneFromCLI(argCli);
     }
     catch (e)
