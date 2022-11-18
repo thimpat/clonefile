@@ -217,6 +217,10 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 ## Changelog
 
 ##### current:
+*  Add a --progress option to display a progress bar while copying
+
+
+##### 3.2.6:
 *  Copy symlinks
 
 
