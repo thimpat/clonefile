@@ -305,6 +305,7 @@ function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false, fo
  * or an array
  * @param sourceArray
  * @param silent
+ * @param force
  * @returns {*[]}
  */
 function determineSourcesFromArrays(sourceArray, {silent = false, force = false})
