@@ -1,6 +1,6 @@
 {
   "name": "clonefile",
-  "version": "3.2.6",
+  "version": "3.3.0",
   "description": "Clone file into multiple locations",
   "main": "./src/clonefile.cjs",
   "bin": {
