@@ -207,6 +207,7 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 | ~~--recursive~~ (obsolete) | ~~false~~   | ~~boolean~~ | ~~_create target directories if necessary_~~         |
 | --force    **              | false       | boolean     | _To allow cloning a directory_                       |
 | --progress                 | false       | boolean     | _Display a progress bar during copy_                 |
+| --clearProgress            | false       | boolean     | _Remove the progress bar when task complete_         |
 
 <br/>
 
