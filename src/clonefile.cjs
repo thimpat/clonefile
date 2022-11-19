@@ -473,7 +473,11 @@ function copyFileToFile(source, target, {force = false, silent = false, progress
  * @param progressBar
  * @returns {boolean}
  */
-function copyFileToFolder(source, targetFolder, commonSourceDir, {force = false, silent = false, progressBar = null} = {})
+function copyFileToFolder(source, targetFolder, commonSourceDir, {
+    force = false,
+    silent = false,
+    progressBar = null
+} = {})
 {
     try
     {
@@ -596,7 +600,7 @@ function copyDetailedSourceToTargets(targets, {
     return {errorFounds, count};
 }
 
-function cloneSources(sources, targets, {force = false, progress = false, silent = false} = {})
+function cloneSources(sources, targets, {force = false, progress = false, silent = false, clearProgress = false} = {})
 {
     let errorFounds = 0, count = 0, progressBar;
     try
@@ -611,12 +615,13 @@ function cloneSources(sources, targets, {force = false, progress = false, silent
                     " {speed} files/second {lastSeparator}{filename}{arrow}{dest}",
                 barCompleteChar  : "\u2588",
                 barIncompleteChar: "\u2591",
-                hideCursor       : true
+                hideCursor       : true,
+                clearOnComplete  : clearProgress
             }, cliProgress.Presets.shades_classic);
 
             progressBar.start(sources.length, 0, {
-                speed: "N/A",
-                arrow: " => ",
+                speed        : "N/A",
+                arrow        : " => ",
                 lastSeparator: "| "
             });
             silent = true;
@@ -648,8 +653,6 @@ function cloneSources(sources, targets, {force = false, progress = false, silent
 
             const t2 = new Date();
 
-            // diffTime -> count
-            // 1000
             const diffTime = t2.getTime() - t1.getTime();
             const speed = Math.floor(count * 1000 / diffTime);
 
@@ -685,7 +688,7 @@ const cloneFromCLI = (argv) =>
 {
     try
     {
-        const {progress, force, silent} = argv;
+        const {progress, force, silent, clearProgress} = argv;
 
         // --------------------
         // Determine source folders and files
@@ -717,7 +720,7 @@ const cloneFromCLI = (argv) =>
         // --------------------
         // Start cloning
         // --------------------
-        const {count} = cloneSources(sources, targets, {force, progress, silent});
+        const {count} = cloneSources(sources, targets, {force, progress, silent, clearProgress});
 
         return {count};
     }
@@ -729,11 +732,11 @@ const cloneFromCLI = (argv) =>
     return false;
 };
 
-const cloneGlobs = (sources, targets, {silent = false, force = true} = {}) =>
+const cloneGlobs = (sources, targets, {silent = false, force = true, progress = false, clearProgress = false} = {}) =>
 {
     try
     {
-        const argCli = {sources, targets, silent, force};
+        const argCli = {sources, targets, silent, force, progress, clearProgress};
         return cloneFromCLI(argCli);
     }
     catch (e)
@@ -744,11 +747,11 @@ const cloneGlobs = (sources, targets, {silent = false, force = true} = {}) =>
     return false;
 };
 
-const clone = (source, targets, {silent = false, force = true, progress = false} = {}) =>
+const clone = (source, targets, {silent = false, force = true, progress = false, clearProgress = false} = {}) =>
 {
     try
     {
-        const argCli = {source, targets, silent, force, progress};
+        const argCli = {source, targets, silent, force, progress, clearProgress};
         return cloneFromCLI(argCli);
     }
     catch (e)
