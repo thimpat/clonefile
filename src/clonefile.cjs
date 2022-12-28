@@ -104,7 +104,7 @@ const copyFile = (source, dest, {
         if (progressBar)
         {
             progressBar.update({filename: source, dest});
-            return true;
+            return {dest, success: true};
         }
 
         displayLog(`${source} => ${dest}`, {fg: "yellow", silent});

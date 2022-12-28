@@ -629,14 +629,11 @@ describe("CloneFile CJS", function ()
 
         it(`should print out all txt in work/cool1 and work/my-dir with a progress bar`, function ()
         {
-            const {stdout} = shell.exec(`node ${cloneFile} --source work/my-dir --source work/the-dir output --dry --force --progress`, {silent: false});
+            const {stdout} = shell.exec(`node ${cloneFile} --sources work/cool-1/**/*.txt --source work/my-dir --source work/the-dir --target output --dry --force --progress`, {silent: false});
 
             expect(stdout)
-                .to.contain(`/test/output/file-1.txt`)
-                .to.contain(`/test/output/my-file1.txt`)
-                .to.contain(`/some/more/depth/file-1.txt`)
-                .to.contain(`/some/more/depth/file-2.txt`)
-                .to.contain(`/test/output/file-0.txt`);
+                .to.contain(`---------------`)
+                .to.contain(`17 items cloned`);
         });
 
     });
