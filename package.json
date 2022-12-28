@@ -10,7 +10,9 @@
     "test": "nyc --reporter=lcov --reporter=text-summary mocha --exit --sort --exclude test/lib",
     "test2": "cross-env ANALOGGER_TEST_PORT=12000 ANALOGGER_LOG_FILE=reporter.log mocha --no-exit --sort --exclude test/lib --reporter ./node_modules/remote-logging/reporter.cjs",
     "demo1": "node index.cjs my-file1.txt file-2.md somewhere/else/ttt.txt somewhere1/ my-dir/ --target simple.txt --recursive",
-    "build": "### to-esm ./src/clonefile.cjs --output ./esm --update-all --keep-external"
+    "build:esm": "to-esm ./src/clonefile.cjs --output ./esm --update-all --skipEsmResolution --target esm",
+    "build:test": "to-esm ./test/integration.specs.cjs --output ./test --skipEsmResolution --target esm",
+    "build:all": "npm run build:esm && npm run build:test"
   },
   "keywords": [
     "productivity",
