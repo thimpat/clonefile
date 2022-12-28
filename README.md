@@ -256,6 +256,27 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 
 ![--progress option example](https://raw.githubusercontent.com/thimpat/demos/main/clonefile/images/progress-during-copy.gif)
 
+
+
+### Package
+
+```
+📁 package                
+│
+│─ 📝 index.cjs (2.1Kb)  
+│─ 📝 index.mjs (2.3Kb)  
+│
+└───📁 src
+│   │
+│   │─ 📝 clonefile.cjs            ⇽ CJS version      - Node (23.4k unminified)
+│   │─ 📝 clonefile.esm            ⇽ ESM version      - Node (24.0k unminified)
+```
+
+<br/>
+
+
+
+
 ## Changelog
 
 ##### current:
