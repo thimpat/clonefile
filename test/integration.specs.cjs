@@ -12,13 +12,15 @@ const cloneFile = `../index.cjs`;
 
 const packageJson = require("../package.json");
 
-describe("CloneFile", function ()
+const testPath = __dirname;
+
+describe("CloneFile CJS", function ()
 {
     this.timeout(20000);
 
     before(async function ()
     {
-        process.chdir("./test");
+        process.chdir(testPath);
     });
 
 
