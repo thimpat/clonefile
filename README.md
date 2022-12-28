@@ -243,6 +243,11 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 ## Changelog
 
 ##### current:
+*  Generate code for ESM with to-esm
+*  Fix help command not working
+
+
+##### 3.5.0:
 *  Replace the --force option with --no-limit to allow unlimited copies
 *  Increase the default limit for copying at once to 10000 (Use --no-limit to remove limitation)
 *  Copy with no limit when cloning programmatically and add a --no-limit option (cli) to enforce unlimited copies
