@@ -5,7 +5,8 @@ module.exports = {
     },
     // parser: "@babel/eslint-parser",
     parserOptions: {
-        "ecmaVersion": 2020
+        "ecmaVersion": 2020,
+        sourceType: "module",
     },
     rules: {
         "comma-dangle": 0,
