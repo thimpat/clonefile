@@ -256,9 +256,11 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 
 ![--progress option example](https://raw.githubusercontent.com/thimpat/demos/main/clonefile/images/progress-during-copy.gif)
 
+<br/>
 
+---
 
-### Package
+## Package
 
 ```
 📁 package                
