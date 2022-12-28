@@ -34,10 +34,26 @@ $> clonefile --sources <pattern> <target1> <target2>...<targetN>  [options]
 
 ### Programmatically
 
+
+<br/>
+
+via CJS
 ```javascript
 const {clone} = require("clonefile");
 
 // "Source" and "target" can be strings or arrays of strings
+clone(source, target, {silent: true, force: true})
+```
+
+<br/>
+
+----
+
+or via ESM
+
+```javascript
+import {clone} from "clonefile";
+
 clone(source, target, {silent: true, force: true})
 ```
 
