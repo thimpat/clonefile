@@ -5,7 +5,8 @@
  */
 
 
-const fs = require("fs-extra");
+const {constants, existsSync, mkdirSync, readFileSync, lstatSync, createWriteStream, createReadStream} = require("fs");
+const {copyFileSync} = require("fs-extra");
 const path = require("path");
 
 const glob = require("glob");
@@ -22,9 +23,12 @@ const {
     normaliseRealPathV2
 } = require("@thimpat/libutils");
 
-const method = fs.copyFileSync ? "new" : "stream";
+const {EOL} = require("os");
+
+const method = copyFileSync ? "new" : "stream";
 
 const packageJson = require("../package.json");
+const {SKIP_MESSAGE} = require("../constants.cjs");
 
 const LIMIT_FILES = parseInt(process.env.CLONE_FILE_MAX_PATTERN) || 5000;
 
@@ -42,7 +46,7 @@ const displayLog = (message, {fg = "yellow", silent = false} = {}) =>
 const displayHelpFile = async function ()
 {
     const helpPath = joinPath(__dirname, "help.md");
-    const content = fs.readFileSync(helpPath, "utf-8");
+    const content = readFileSync(helpPath, "utf-8");
     await showHelp(content, {
         windowTitle    : `${packageJson.name} v${packageJson.version} - Help ❔`,
         topText        : "Press CTRL + C or Q to Quit | Page Down or Any key to scroll down",
@@ -68,24 +72,29 @@ const displayError = (message, style = {fg: "red"}) =>
  * @param isRecursive
  * @param silent
  * @param progressBar
+ * @param dry
+ * @returns {{success: boolean}|{success: boolean, dest}|boolean}
  */
-const copyFile = (source, dest, {isRecursive = true, silent = false, progressBar = null} = {}) =>
+const copyFile = (source, dest, {isRecursive = true, silent = false, progressBar = null, dry = false} = {}) =>
 {
     try
     {
         const dir = path.parse(dest).dir;
-        if (dir && !fs.existsSync(dir) && isRecursive)
+        if (dir && !existsSync(dir) && isRecursive)
         {
-            fs.mkdirSync(dir, {recursive: true});
+            mkdirSync(dir, {recursive: true});
         }
 
-        if (method === "stream")
+        if (!dry)
         {
-            fs.createReadStream(source).pipe(fs.createWriteStream(dest));
-        }
-        else
-        {
-            fs.copyFileSync(source, dest, fs.constants.F_OK);
+            if (method === "stream")
+            {
+                createReadStream(source).pipe(createWriteStream(dest));
+            }
+            else
+            {
+                copyFileSync(source, dest, constants.F_OK);
+            }
         }
 
         if (progressBar)
@@ -285,7 +294,7 @@ function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false, fo
                     // glob as it would be too soon to calculate the common dir)
                     .filter(element =>
                     {
-                        return fs.lstatSync(element.filepath).isFile();
+                        return lstatSync(element.filepath).isFile();
                     });
                 sources.push(...srcs);
             }
@@ -333,13 +342,13 @@ function determineSourcesFromArrays(sourceArray, {silent = false, force = false}
             {
                 const item = sourceArray[i];
                 const source = item.filepath;
-                if (!fs.existsSync(source))
+                if (!existsSync(source))
                 {
                     displayError(`Could not find ${source}`);
                     continue;
                 }
 
-                const stats = fs.lstatSync(source);
+                const stats = lstatSync(source);
                 if (stats.isFile())
                 {
                     let dir = path.parse(source).dir;
@@ -429,38 +438,41 @@ function determineSources({argv_ = null, argvSources = null, argvSource = null, 
  * @param source
  * @param target
  * @param commonSourceDir
- * @returns {boolean}
+ * @param force
+ * @param silent
+ * @param progressBar
+ * @param dry
+ * @returns {{success: boolean}|{success: boolean, dest}}
  */
-function copyFileToFile(source, target, {force = false, silent = false, progressBar = null} = {})
+function copyFileToFile(source, target, {force = false, silent = false, progressBar = null, dry = false} = {})
 {
     try
     {
         if (!force)
         {
-            if (fs.existsSync(target))
+            if (existsSync(target))
             {
                 displayError(`The destination "${target}" for the file "${source}" already exists. Use --force option to overwrite. Skipping`, {fg: "red"});
-                return false;
+                return {success: false};
             }
 
             let dir = path.parse(target).dir;
             dir = normalisePath(dir, {isFolder: true});
-            if (!fs.existsSync(dir))
+            if (!existsSync(dir))
             {
                 displayError(`The folder "${dir}" does not exist. Use --force option to allow the action. Skipping`, {fg: "red"});
-                return false;
+                return {success: false};
             }
-
         }
 
-        return copyFile(source, target, {silent, progressBar});
+        return copyFile(source, target, {silent, progressBar, dry});
     }
     catch (e)
     {
         console.error({lid: 4267}, e.message);
     }
 
-    return false;
+    return {success: false};
 }
 
 /**
