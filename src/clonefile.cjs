@@ -25,10 +25,9 @@ const {
 
 const {EOL} = require("os");
 
-const method = copyFileSync ? "new" : "stream";
-
 const packageJson = require("../package.json");
-const {LIMIT_FILES, SKIP_MESSAGE} = require("../constants.cjs");
+const {LIMIT_FILES, SKIP_MESSAGE} = require("./constants.cjs");
+
 
 let errorFounds = 0;
 
