@@ -39,7 +39,7 @@
     "nyc": "^15.1.0",
     "remote-logging": "^1.4.4",
     "shelljs": "^0.8.5",
-    "to-esm": "^2.26.4"
+    "to-esm": "^2.26.5"
   },
   "dependencies": {
     "@thimpat/libutils": "^1.13.4",
