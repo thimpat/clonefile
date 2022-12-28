@@ -5,7 +5,7 @@ const minimist = require("minimist");
 const argv = minimist(process.argv.slice(2), {boolean: ["silent", "force"]});
 const packageJson = require("./package.json");
 const {displayError, displayLog, cloneFromCLI} = require("./src/clonefile.cjs");
-const {SKIP_MESSAGE} = require("./constants.cjs");
+const {SKIP_MESSAGE} = require("./src/constants.cjs");
 
 const init = async () =>
 {
