@@ -582,6 +582,65 @@ describe("CloneFile CJS", function ()
 
     });
 
+    describe("--dry and --list options", function ()
+    {
+        beforeEach(async function ()
+        {
+            if (fs.existsSync("output"))
+            {
+                fs.rmSync("output", {recursive: true});
+            }
+        });
+
+        it(`should print out all txt in work/cool1 and work/cool2`, function ()
+        {
+            const {stdout} = shell.exec(`node ${cloneFile} --sources work/cool-1/**/*.txt --sources work/cool-2/*.txt --source work/my-dir --source work/the-dir --list-only --force`, {silent: false});
+
+            expect(stdout)
+                .to.contain(`"./work/cool-1/aaa.txt"`)
+                .to.contain(`"./work/cool-1/bbb.txt",`)
+                .to.contain(`"./work/cool-1/ccc.txt",`)
+                .to.contain(`"./work/the-dir/file-0.txt"`);
+        });
+
+        it(`should print out all txt in work/cool1 and work/cool2`, function ()
+        {
+            const {stdout} = shell.exec(
+                `node ${cloneFile} --sources work/cool-1/**/*.txt --source work/my-dir --source work/the-dir --list --dry --force`, {silent: false});
+
+            expect(stdout)
+                .to.contain(`"./work/cool-1/aaa.txt"`)
+                .to.contain(`"./work/cool-1/bbb.txt",`)
+                .to.contain(`"./work/cool-1/ccc.txt",`)
+                .to.contain(`"./work/the-dir/file-0.txt"`);
+        });
+
+        it(`should print out all txt in work/cool1 and work/cool2`, function ()
+        {
+            const {stdout} = shell.exec(`node ${cloneFile} --source work/my-dir --source work/the-dir output --dry --force`, {silent: false});
+
+            expect(stdout)
+                .to.contain(`/test/output/file-1.txt`)
+                .to.contain(`/test/output/my-file1.txt`)
+                .to.contain(`/some/more/depth/file-1.txt`)
+                .to.contain(`/some/more/depth/file-2.txt`)
+                .to.contain(`/test/output/file-0.txt`);
+        });
+
+        it(`should print out all txt in work/cool1 and work/my-dir with a progress bar`, function ()
+        {
+            const {stdout} = shell.exec(`node ${cloneFile} --source work/my-dir --source work/the-dir output --dry --force --progress`, {silent: false});
+
+            expect(stdout)
+                .to.contain(`/test/output/file-1.txt`)
+                .to.contain(`/test/output/my-file1.txt`)
+                .to.contain(`/some/more/depth/file-1.txt`)
+                .to.contain(`/some/more/depth/file-2.txt`)
+                .to.contain(`/test/output/file-0.txt`);
+        });
+
+    });
+
 
 });
 
