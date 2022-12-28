@@ -32,23 +32,23 @@
     "chai-files": "^1.4.0",
     "cross-env": "^7.0.3",
     "eslint": "^8.17.0",
-    "mocha": "^10.0.0",
+    "mocha": "^10.2.0",
     "nyc": "^15.1.0",
     "remote-logging": "^1.4.4",
     "shelljs": "^0.8.5",
-    "to-esm": "^2.23.2"
+    "to-esm": "^2.26.4"
   },
   "dependencies": {
     "@thimpat/libutils": "^1.13.4",
     "cli-progress": "^3.11.2",
-    "fs-extra": "^10.1.0",
     "glob": "^8.0.3",
     "minimist": "^1.2.6",
     "pageterm": "^1.0.2",
     "to-ansi": "^1.4.3"
   },
-  "type": "commonjs",
+  "type": "module",
   "exports": {
-    "require": "./src/clonefile.cjs"
+    "require": "./src/clonefile.cjs",
+    "import": "./esm/clonefile.mjs"
   }
 }
