@@ -49,6 +49,13 @@ clone(source, target, {silent: true, force: true})
 
 <br/>
 
+#### Only list files in a directory without doing any copy 
+
+```shell
+$> clonefile my-dir/ --list-only
+```
+
+
 #### Clone a file
 
 ```shell
@@ -197,17 +204,20 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 ## Options
 
 
-| **Options**                | **default** | **Expect**  | **Description**                                      | 
-|----------------------------|-------------|-------------|------------------------------------------------------|
-| --silent                   | false       | boolean     | _Whether to display messages_                        |
-| --sources                  | ""          | string      | _Glob Pattern to determine files to copy_            |
-| --source                   | ""          | string      | _Regular file path for files or directories to copy_ |
-| --target                   | ""          | string      | _Destination files or folders_                       |
-| ~~--overwrite~~ (obsolete) | ~~true~~    | ~~boolean~~ | ~~_Whether to overwrite destination_~~               |
-| ~~--recursive~~ (obsolete) | ~~false~~   | ~~boolean~~ | ~~_create target directories if necessary_~~         |
-| --force    **              | false       | boolean     | _To allow cloning a directory_                       |
-| --progress                 | false       | boolean     | _Display a progress bar during copy_                 |
-| --clearProgress            | false       | boolean     | _Remove the progress bar when task complete_         |
+| **Options**                | **default** | **Expect**  | **Description**                                                                              | 
+|----------------------------|-------------|-------------|----------------------------------------------------------------------------------------------|
+| --silent                   | false       | boolean     | _Whether to display messages_                                                                |
+| --sources                  | ""          | string      | _Glob Pattern to determine files to copy_                                                    |
+| --source                   | ""          | string      | _Regular file path for files or directories to copy_                                         |
+| --target                   | ""          | string      | _Destination files or folders_                                                               |
+| ~~--overwrite~~ (obsolete) | ~~true~~    | ~~boolean~~ | ~~_Whether to overwrite destination_~~                                                       |
+| ~~--recursive~~ (obsolete) | ~~false~~   | ~~boolean~~ | ~~_create target directories if necessary_~~                                                 |
+| --force    **              | false       | boolean     | _To allow cloning a directory_                                                               |
+| --progress                 | false       | boolean     | _Display a progress bar during copy_                                                         |
+| --clearProgress            | false       | boolean     | _Remove the progress bar when task complete_                                                 |
+| --list                     | false       | boolean     | _Print out the file list to copy_                                                            |
+| --list-only                | false       | boolean     | _Only display the file list to copy in an array formatted for Js. <br/>No copy will be done_ |
+| --dry                      | false       | boolean     | _Print out all operations, but without doing any copy_                                       |
 
 <br/>
 
