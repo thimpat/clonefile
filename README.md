@@ -243,6 +243,17 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 ## Changelog
 
 ##### current:
+*  Replace the --force option with --no-limit to allow unlimited copies
+*  Increase the default limit for copying at once to 10000 (Use --no-limit to remove limitation)
+*  Copy with no limit when cloning programmatically and add a --no-limit option (cli) to enforce unlimited copies
+*  Add --list, --list-only and --dry options
+
+
+##### 3.4.0:
+*  Add the option --clearProgress
+
+
+##### 3.3.0:
 *  Add a --progress option to display a progress bar while copying
 
 
