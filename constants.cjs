@@ -1,0 +1,1 @@
+module.exports.SKIP_MESSAGE = "skip-message";

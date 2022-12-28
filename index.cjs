@@ -5,6 +5,7 @@ const minimist = require("minimist");
 const argv = minimist(process.argv.slice(2), {boolean: ["silent", "force"]});
 const packageJson = require("./package.json");
 const {displayError, displayLog, cloneFromCLI} = require("./src/clonefile.cjs");
+const {SKIP_MESSAGE} = require("./constants.cjs");
 
 const init = async () =>
 {
@@ -50,18 +51,23 @@ const init = async () =>
             argv.overwrite = true;
         }
 
-        const {count} = cloneFromCLI(argv);
+        let {count, message} = cloneFromCLI(argv);
+
+        process.exitCode = process.exitCode || 0;
+
+        if (message === SKIP_MESSAGE)
+        {
+            return;
+        }
 
         if (!argv.silent)
         {
-            const message = `${count} ${count === 1 ? "item" : "items"} cloned`;
+            message = message || `${count} ${count === 1 ? "item" : "items"} cloned`;
             displayLog(``.padEnd(message.length, "-"), {fg: "orange"});
             displayLog(message, {fg: "orange"});
         }
 
-        process.exitCode = process.exitCode || 0;
         return;
-
     }
     catch (e)
     {
