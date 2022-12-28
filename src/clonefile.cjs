@@ -267,11 +267,8 @@ function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false, fo
 
                 if (!noLimit && srcs.length > LIMIT_FILES)
                 {
-                    if (!force)
-                    {
-                        displayError(`More than ${LIMIT_FILES} files find in glob patterns => ${pattern} . Use --force to allow the process`);
-                        return [];
-                    }
+                    displayError(`More than ${LIMIT_FILES} files find in glob patterns => ${pattern} . Use --no-limit options to allow the process`);
+                    return [];
                 }
 
                 srcs = [...new Set(srcs)];
