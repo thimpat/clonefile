@@ -49,12 +49,26 @@ clone(source, target, {silent: true, force: true})
 
 <br/>
 
-#### Only list files in a directory without doing any copy 
+#### Display file list in a directory without doing any copies 
 
 ```shell
 $> clonefile my-dir/ --list-only
 ```
 
+ 💻  ↴
+```json lines
+[
+   "./docs/images/img_1.png",
+   "./docs/images/img_2.png",
+   "./docs/images/img_3.png",
+   "./docs/images/img_4.png",
+   ...
+]
+```
+
+<br/>
+
+---
 
 #### Clone a file
 
@@ -217,7 +231,8 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 | --clearProgress            | false       | boolean     | _Remove the progress bar when task complete_                                                 |
 | --list                     | false       | boolean     | _Print out the file list to copy_                                                            |
 | --list-only                | false       | boolean     | _Only display the file list to copy in an array formatted for Js. <br/>No copy will be done_ |
-| --dry                      | false       | boolean     | _Print out all operations, but without doing any copy_                                       |
+| --dry                      | false       | boolean     | _Print out all operations, but without making any copies_                                    |
+| --no-limit                 | false       | boolean     | _Ignore the limit set on copies (10000 by default)._                                         |
 
 <br/>
 
