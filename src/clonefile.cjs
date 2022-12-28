@@ -5,11 +5,13 @@
  */
 
 
-const {constants, existsSync, mkdirSync, readFileSync, lstatSync, createWriteStream, createReadStream} = require("fs");
-const {copyFileSync} = require("fs-extra");
+const {constants, existsSync, mkdirSync, readFileSync, lstatSync, createWriteStream, createReadStream, copyFileSync} = require("fs");
+const method = copyFileSync ? "new" : "stream";
+
 const path = require("path");
 
 const glob = require("glob");
+
 const cliProgress = require("cli-progress");
 
 const toAnsi = require("to-ansi");
