@@ -28,9 +28,7 @@ const {EOL} = require("os");
 const method = copyFileSync ? "new" : "stream";
 
 const packageJson = require("../package.json");
-const {SKIP_MESSAGE} = require("../constants.cjs");
-
-const LIMIT_FILES = parseInt(process.env.CLONE_FILE_MAX_PATTERN) || 5000;
+const {LIMIT_FILES, SKIP_MESSAGE} = require("../constants.cjs");
 
 let errorFounds = 0;
 
@@ -75,7 +73,12 @@ const displayError = (message, style = {fg: "red"}) =>
  * @param dry
  * @returns {{success: boolean}|{success: boolean, dest}|boolean}
  */
-const copyFile = (source, dest, {isRecursive = true, silent = false, progressBar = null, dry = false} = {}) =>
+const copyFile = (source, dest, {
+    isRecursive = true,
+    silent = false,
+    progressBar = null,
+    dry = false,
+} = {}) =>
 {
     try
     {
@@ -229,7 +232,7 @@ function getDetailedSource(src)
  *
  * @returns {SourceDetail[]}
  */
-function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false, force = false,} = {})
+function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false, force = false, noLimit = false} = {})
 {
     const sources = [];
 
@@ -262,7 +265,7 @@ function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false, fo
                     continue;
                 }
 
-                if (srcs.length > LIMIT_FILES)
+                if (!noLimit && srcs.length > LIMIT_FILES)
                 {
                     if (!force)
                     {
@@ -323,9 +326,10 @@ function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false, fo
  * @param sourceArray
  * @param silent
  * @param force
+ * @param noLimit
  * @returns {*[]}
  */
-function determineSourcesFromArrays(sourceArray, {silent = false, force = false})
+function determineSourcesFromArrays(sourceArray, {silent = false, force = false, noLimit = false})
 {
     const sources = [];
     try
@@ -365,7 +369,7 @@ function determineSourcesFromArrays(sourceArray, {silent = false, force = false}
                     continue;
                 }
 
-                let results = determineSourcesFromGlobs(source + "**", {commonDir: source, silent, force});
+                let results = determineSourcesFromGlobs(source + "**", {commonDir: source, silent, force, noLimit});
                 results.forEach(src =>
                 {
                     src.commonSourceDir = source;
@@ -390,19 +394,28 @@ function determineSourcesFromArrays(sourceArray, {silent = false, force = false}
  * @param argvSources
  * @param argvSource
  * @param silent
+ * @param force
+ * @param noLimit
  */
-function determineSources({argv_ = null, argvSources = null, argvSource = null, silent = false, force = false} = {})
+function determineSources({
+                              argv_ = null,
+                              argvSources = null,
+                              argvSource = null,
+                              silent = false,
+                              force = false,
+                              noLimit = false
+                          } = {})
 {
     const sources = [];
     try
     {
-        let results = determineSourcesFromGlobs(argvSources, {commondDir: "", silent, force});
+        let results = determineSourcesFromGlobs(argvSources, {commondDir: "", silent, force, noLimit});
         if (results.length)
         {
             sources.push(...results);
         }
 
-        results = determineSourcesFromArrays(argvSource, {silent, force});
+        results = determineSourcesFromArrays(argvSource, {silent, force, noLimit});
         if (results.length)
         {
             sources.push(...results);
@@ -417,7 +430,7 @@ function determineSources({argv_ = null, argvSources = null, argvSource = null, 
             }
 
             const source = argv_.shift();
-            results = determineSourcesFromArrays(source, {silent, force});
+            results = determineSourcesFromArrays(source, {silent, force, noLimit});
             if (results.length)
             {
                 sources.push(...results);
@@ -444,7 +457,12 @@ function determineSources({argv_ = null, argvSources = null, argvSource = null, 
  * @param dry
  * @returns {{success: boolean}|{success: boolean, dest}}
  */
-function copyFileToFile(source, target, {force = false, silent = false, progressBar = null, dry = false} = {})
+function copyFileToFile(source, target, {
+    force = false,
+    silent = false,
+    progressBar = null,
+    dry = false,
+} = {})
 {
     try
     {
@@ -490,7 +508,7 @@ function copyFileToFolder(source, targetFolder, commonSourceDir, {
     force = false,
     silent = false,
     progressBar = null,
-    dry = false
+    dry = false,
 } = {})
 {
     try
@@ -722,7 +740,21 @@ const cloneFromCLI = (argv) =>
 {
     try
     {
-        const {progress, force, silent, clearProgress, dry, list, "list-only": listOnly0, listOnly} = argv;
+        let {
+            progress,
+            force,
+            silent,
+            clearProgress,
+            dry,
+            list,
+            "list-only": listOnly0,
+            "no-limit" : noLimit0,
+            listOnly,
+            noLimit
+        } = argv;
+
+        listOnly = listOnly || listOnly0;
+        noLimit = noLimit || noLimit0;
 
         // --------------------
         // Determine source folders and files
@@ -732,7 +764,8 @@ const cloneFromCLI = (argv) =>
             argvSources: argv.sources,
             argvSource : argv.source,
             force,
-            silent
+            silent,
+            noLimit
         });
 
         sources = sources || [];
@@ -746,7 +779,7 @@ const cloneFromCLI = (argv) =>
             eltListString.push('"' + elt.filepath + '"');
         }
 
-        if (list || listOnly || listOnly0)
+        if (list || listOnly)
         {
             let listResult = [];
 
@@ -756,7 +789,7 @@ const cloneFromCLI = (argv) =>
 
             console.log(listResult.join(EOL));
 
-            if (listOnly || listOnly0)
+            if (listOnly)
             {
                 return {count: sources.length, success: true, message: SKIP_MESSAGE, list: eltList};
             }
@@ -802,12 +835,13 @@ const cloneGlobs = (sources, targets, {
     clearProgress = false,
     list = false,
     listOnly = false,
+    noLimit = true,
     dry = false
 } = {}) =>
 {
     try
     {
-        const argCli = {sources, targets, silent, force, progress, clearProgress, list, dry, listOnly};
+        const argCli = {sources, targets, silent, force, progress, clearProgress, list, dry, listOnly, noLimit};
         return cloneFromCLI(argCli);
     }
     catch (e)
@@ -825,12 +859,13 @@ const clone = (source, targets, {
     clearProgress = false,
     list = false,
     listOnly = false,
+    noLimit = true,
     dry = false
 } = {}) =>
 {
     try
     {
-        const argCli = {source, targets, silent, force, progress, clearProgress, list, dry, listOnly};
+        const argCli = {source, targets, silent, force, progress, clearProgress, list, dry, noLimit, listOnly};
         return cloneFromCLI(argCli);
     }
     catch (e)
