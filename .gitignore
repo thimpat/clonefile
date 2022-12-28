@@ -95,3 +95,6 @@ my-cool-dir*
 *.text
 /my-dir-*
 /test/output/
+/index.mjs
+/src/constants.mjs
+/src/clonefile.mjs
