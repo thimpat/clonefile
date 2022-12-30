@@ -5,7 +5,7 @@
  */
 
 
-const {constants, existsSync, mkdirSync, readFileSync, lstatSync, createWriteStream, createReadStream, copyFileSync} = require("fs");
+const {constants, existsSync, mkdirSync, readFileSync, statSync, createWriteStream, createReadStream, copyFileSync} = require("fs");
 const method = copyFileSync ? "new" : "stream";
 
 const path = require("path");
@@ -129,7 +129,7 @@ const getEntityStatus = (filepath) =>
     if (existsSync(filepath))
     {
         res.exists = true;
-        const stats = lstatSync(filepath);
+        const stats = statSync(filepath);
         if (!stats.isFile() && !stats.isDirectory())
         {
             res.unhandledType = true;
@@ -295,7 +295,7 @@ function determineSourcesFromGlobs(patterns, {commonDir = "", silent = false, fo
                     // glob as it would be too soon to calculate the common dir)
                     .filter(element =>
                     {
-                        return lstatSync(element.filepath).isFile();
+                        return statSync(element.filepath).isFile();
                     });
                 sources.push(...srcs);
             }
@@ -350,7 +350,7 @@ function determineSourcesFromArrays(sourceArray, {silent = false, force = false,
                     continue;
                 }
 
-                const stats = lstatSync(source);
+                const stats = statSync(source);
                 if (stats.isFile())
                 {
                     let dir = path.parse(source).dir;
