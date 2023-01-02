@@ -98,3 +98,4 @@ my-cool-dir*
 /index.mjs
 /src/constants.mjs
 /src/clonefile.mjs
+/test/integration.specs.mjs
