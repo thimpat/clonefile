@@ -850,7 +850,7 @@ const cloneGlobs = (sources, targets, {
     return false;
 };
 
-const clone = (source, targets, {
+const cloneFile = (source, targets, {
     silent = false,
     force = true,
     progress = false,
@@ -891,4 +891,4 @@ module.exports.cloneSources = cloneSources;
 module.exports.cloneFromCLI = cloneFromCLI;
 
 module.exports.cloneGlobs = cloneGlobs;
-module.exports.clone = clone;
+module.exports.cloneFile = cloneFile;
