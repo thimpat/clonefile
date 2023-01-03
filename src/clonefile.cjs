@@ -874,6 +874,16 @@ const cloneFile = (source, targets, {
     return false;
 };
 
+const clonefile = function (...args)
+{
+    return cloneFile(...args);
+};
+
+const clone = function (...args)
+{
+    return cloneFile(...args);
+};
+
 module.exports.determineSources = determineSources;
 module.exports.determineTargets = determineTargets;
 
@@ -892,3 +902,5 @@ module.exports.cloneFromCLI = cloneFromCLI;
 
 module.exports.cloneGlobs = cloneGlobs;
 module.exports.cloneFile = cloneFile;
+module.exports.clonefile = clonefile;
+module.exports.clone = clone;
