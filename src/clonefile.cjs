@@ -5,7 +5,16 @@
  */
 
 
-const {constants, existsSync, mkdirSync, readFileSync, statSync, createWriteStream, createReadStream, copyFileSync} = require("fs");
+const {
+    constants,
+    existsSync,
+    mkdirSync,
+    readFileSync,
+    statSync,
+    createWriteStream,
+    createReadStream,
+    copyFileSync
+} = require("fs");
 const method = copyFileSync ? "new" : "stream";
 
 const path = require("path");
@@ -458,6 +467,7 @@ function determineSources({
 function copyFileToFile(source, target, {
     force = false,
     silent = false,
+    hideOverwriteError = false,
     progressBar = null,
     dry = false,
 } = {})
@@ -468,7 +478,10 @@ function copyFileToFile(source, target, {
         {
             if (existsSync(target))
             {
-                displayError(`The destination "${target}" for the file "${source}" already exists. Use --force option to overwrite. Skipping`, {fg: "red"});
+                if (!hideOverwriteError)
+                {
+                    displayError(`The destination "${target}" for the file "${source}" already exists. Use --force option to overwrite. Skipping`, {fg: "red"});
+                }
                 return {success: false};
             }
 
@@ -505,6 +518,7 @@ function copyFileToFile(source, target, {
 function copyFileToFolder(source, targetFolder, commonSourceDir, {
     force = false,
     silent = false,
+    hideOverwriteError = false,
     progressBar = null,
     dry = false,
 } = {})
@@ -515,7 +529,7 @@ function copyFileToFolder(source, targetFolder, commonSourceDir, {
         const dest = joinPath(targetFolder, destinationFile);
         const destinationPath = resolvePath(dest);
 
-        return copyFileToFile(source, destinationPath, {force, silent, progressBar, dry});
+        return copyFileToFile(source, destinationPath, {force, silent, progressBar, dry, hideOverwriteError});
     }
     catch (e)
     {
@@ -541,6 +555,7 @@ function copySourceToTarget(source, target, commonSourceDir, {
     force = false,
     targetStatus = null,
     silent = false,
+    hideOverwriteError = false,
     dry = false,
     progressBar = null
 } = {})
@@ -558,11 +573,17 @@ function copySourceToTarget(source, target, commonSourceDir, {
         // Copying a file to a directory
         if (targetStatus.isFile)
         {
-            return copyFileToFile(source, target, {force, silent, progressBar, dry});
+            return copyFileToFile(source, target, {force, silent, progressBar, dry, hideOverwriteError});
         }
         else if (targetStatus.isDir)
         {
-            return copyFileToFolder(source, target, commonSourceDir, {force, silent, progressBar, dry});
+            return copyFileToFolder(source, target, commonSourceDir, {
+                force,
+                silent,
+                progressBar,
+                dry,
+                hideOverwriteError
+            });
         }
 
         displayError(`The source "${source}" is neither a file nor a directory. Skipping`, {fg: "red"});
@@ -595,6 +616,7 @@ function copyDetailedSourceToTargets(targets, {
     left = 0,
     silent = false,
     dry = false,
+    hideOverwriteError = false,
     progressBar = null,
     report = []
 })
@@ -611,7 +633,7 @@ function copyDetailedSourceToTargets(targets, {
             let targetStatus = getEntityStatus(target);
 
             const result = copySourceToTarget(source, target, commonSourceDir,
-                {force, silent, targetStatus, progressBar, dry});
+                {force, silent, targetStatus, progressBar, dry, hideOverwriteError});
 
             report.push({...result, source, commonSourceDir});
 
@@ -647,6 +669,7 @@ function cloneSources(sources, targets, {
     silent = false,
     clearProgress = false,
     dry = false,
+    hideOverwriteError = false,
     report = []
 } = {})
 {
@@ -690,7 +713,8 @@ function cloneSources(sources, targets, {
                     silent,
                     dry,
                     progressBar,
-                    report
+                    report,
+                    hideOverwriteError
                 })
             );
 
@@ -747,12 +771,15 @@ const cloneFromCLI = (argv) =>
             list,
             "list-only": listOnly0,
             "no-limit" : noLimit0,
+            hideOverwriteError,
+            "hide-overwrite-error": hideOverwriteError0,
             listOnly,
             noLimit
         } = argv;
 
         listOnly = listOnly || listOnly0;
         noLimit = noLimit || noLimit0;
+        hideOverwriteError = hideOverwriteError || hideOverwriteError0;
 
         // --------------------
         // Determine source folders and files
@@ -814,7 +841,15 @@ const cloneFromCLI = (argv) =>
         // Start cloning
         // --------------------
         const report = [];
-        const {count} = cloneSources(sources, targets, {force, progress, silent, clearProgress, dry, report});
+        const {count} = cloneSources(sources, targets, {
+            force,
+            progress,
+            silent,
+            clearProgress,
+            dry,
+            report,
+            hideOverwriteError
+        });
 
         return {count, success: false, list: eltList, report};
     }
@@ -858,12 +893,25 @@ const cloneFile = (source, targets, {
     list = false,
     listOnly = false,
     noLimit = true,
-    dry = false
+    dry = false,
+    hideOverwriteError = false
 } = {}) =>
 {
     try
     {
-        const argCli = {source, targets, silent, force, progress, clearProgress, list, dry, noLimit, listOnly};
+        const argCli = {
+            source,
+            targets,
+            silent,
+            force,
+            progress,
+            clearProgress,
+            list,
+            dry,
+            noLimit,
+            listOnly,
+            hideOverwriteError
+        };
         return cloneFromCLI(argCli);
     }
     catch (e)
