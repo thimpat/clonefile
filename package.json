@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "@thimpat/libutils": "^1.13.4",
+    "@types/node": "^18.11.18",
     "cli-progress": "^3.11.2",
     "glob": "^8.0.3",
     "minimist": "^1.2.6",
