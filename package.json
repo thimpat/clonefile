@@ -54,5 +54,6 @@
   "exports": {
     "require": "./src/clonefile.cjs",
     "import": "./src/clonefile.mjs"
-  }
+  },
+  "typings": "./index.d.cts"
 }
