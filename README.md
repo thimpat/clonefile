@@ -249,6 +249,7 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 | --list-only                | false       | boolean     | _Only display the file list to copy in an array formatted for Js. <br/>No copy will be done_ |
 | --dry                      | false       | boolean     | _Print out all operations, but without making any copies_                                    |
 | --no-limit                 | false       | boolean     | _Ignore the limit set on copies (10000 by default)._                                         |
+| --hide-overwrite-error     | false       | boolean     | _Don't display error messages on overwrite._                                                 |
 
 <br/>
 
@@ -270,8 +271,8 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 │
 └───📁 src
 │   │
-│   │─ 📝 clonefile.cjs            ⇽ CJS version      - Node (23.4k unminified)
-│   │─ 📝 clonefile.esm            ⇽ ESM version      - Node (24.0k unminified)
+│   │─ 📝 clonefile.cjs            ⇽ CJS version      - Node (24.6k unminified)
+│   │─ 📝 clonefile.esm            ⇽ ESM version      - Node (24.2k unminified)
 ```
 
 <br/>
