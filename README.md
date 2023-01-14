@@ -283,6 +283,18 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 ## Changelog
 
 ##### current:
+*  Add --hide-overwrite-error option
+
+
+##### 3.7.2:
+*  Allow copying with clonefile and clone functions
+
+
+##### 3.7.0:
+*  Follow symlinks
+
+
+##### 3.6.0:
 *  Generate code for ESM with to-esm
 *  Fix help command not working
 
