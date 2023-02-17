@@ -104,3 +104,4 @@ my-file1.txt
 /.nycrc
 /demo/
 /bump.js
+/.to-esm.cjs
