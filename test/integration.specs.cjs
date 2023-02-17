@@ -114,7 +114,7 @@ describe("CloneFile CJS", function ()
                 .to.contain("The folder")
                 .to.contain("does not exist")
                 .to.contain("/output/dir1/")
-                .to.contain("Use --force option to allow the action");
+                .to.contain("Use --recursive option to allow the action");
         });
 
         it("should clone into non-existing directory with the --force option", async function ()
@@ -134,7 +134,7 @@ describe("CloneFile CJS", function ()
             expect(stderr)
                 .to.contain("Error: The folder")
                 .to.contain("does not exist")
-                .to.contain("Use --force option to allow the action");
+                .to.contain("Use --recursive option to allow the action");
         });
 
         it("should not clone a file when the target file already exists especially with the overwrite option" +
@@ -145,7 +145,7 @@ describe("CloneFile CJS", function ()
             expect(stderr)
                 .to.contain("Error: The folder")
                 .to.contain("does not exist")
-                .to.contain("Use --force option to allow the action");
+                .to.contain("Use --recursive option to allow the action");
         });
 
 
@@ -325,7 +325,7 @@ describe("CloneFile CJS", function ()
 
         it("should clone a file into multiple directories with the recursive option", function ()
         {
-            const {stdout} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/somewhere1/ ./output/somewhere2/ ./output/somewhere3/ --force --silent`, {silent: false});
+            const {stdout} = shell.exec(`node ${cloneFile} work/file-1.txt ./output/somewhere1/ ./output/somewhere2/ ./output/somewhere3/ --recursive --silent`, {silent: false});
 
             expect(stdout)
                 .to.be.empty;
@@ -419,7 +419,7 @@ describe("CloneFile CJS", function ()
             const {stderr} = shell.exec(`node ${cloneFile} --sources work/cool-1/*.txt output`, {silent: false});
 
             expect(stderr)
-                .to.contain(`Use --force option to allow the action`);
+                .to.contain(`Use --recursive option to allow the action`);
         });
 
         it("should copy all txt in the cool-1 directory to the output directory", function ()
@@ -525,7 +525,7 @@ describe("CloneFile CJS", function ()
             const {stderr} = shell.exec(`node ${cloneFile} --sources work/cool-1/*.txt output`, {silent: false});
 
             expect(stderr)
-                .to.contain(`Use --force option to allow the action`);
+                .to.contain(`Use --recursive option to allow the action`);
         });
 
         it("should copy all txt in the cool-1 directory to the output directory", function ()
