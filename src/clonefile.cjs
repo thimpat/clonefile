@@ -905,6 +905,7 @@ const cloneGlobs = (sources, targets, {
 
 const cloneFile = (source, targets, {
     silent = false,
+    recursive = false,
     force = true,
     progress = false,
     clearProgress = false,
@@ -922,6 +923,7 @@ const cloneFile = (source, targets, {
             targets,
             silent,
             force,
+            recursive,
             progress,
             clearProgress,
             list,
