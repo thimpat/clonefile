@@ -270,8 +270,8 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 │
 └───📁 src
 │   │
-│   │─ 📝 clonefile.cjs            ⇽ CJS version      - Node (24.6k unminified)
-│   │─ 📝 clonefile.esm            ⇽ ESM version      - Node (24.2k unminified)
+│   │─ 📝 clonefile.cjs            ⇽ CJS version      - Node (25.1k unminified)
+│   │─ 📝 clonefile.esm            ⇽ ESM version      - Node (25.7k unminified)
 ```
 
 <br/>
@@ -282,7 +282,11 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 ## Changelog
 
 ##### current:
-*  Add --hide-overwrite-error option
+*  Restore the --recursive option
+
+
+##### 3.8.0:
+*  Add the option --hide-overwrite-error
 
 
 ##### 3.7.2:
