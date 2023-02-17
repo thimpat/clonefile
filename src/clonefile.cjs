@@ -466,6 +466,7 @@ function determineSources({
  */
 function copyFileToFile(source, target, {
     force = false,
+    recursive = false,
     silent = false,
     hideOverwriteError = false,
     progressBar = null,
@@ -484,12 +485,15 @@ function copyFileToFile(source, target, {
                 }
                 return {success: false};
             }
+        }
 
+        if (!recursive)
+        {
             let dir = path.parse(target).dir;
             dir = normalisePath(dir, {isFolder: true});
             if (!existsSync(dir))
             {
-                displayError(`The folder "${dir}" does not exist. Use --force option to allow the action. Skipping`, {fg: "red"});
+                displayError(`The folder "${dir}" does not exist. Use --recursive option to allow the action. Skipping`, {fg: "red"});
                 return {success: false};
             }
         }
@@ -510,13 +514,16 @@ function copyFileToFile(source, target, {
  * @param targetFolder
  * @param commonSourceDir
  * @param force
+ * @param recursive
  * @param silent
+ * @param hideOverwriteError
  * @param progressBar
  * @param dry
  * @returns {{success: boolean}|{success: boolean, dest}}
  */
 function copyFileToFolder(source, targetFolder, commonSourceDir, {
     force = false,
+    recursive = false,
     silent = false,
     hideOverwriteError = false,
     progressBar = null,
@@ -529,7 +536,7 @@ function copyFileToFolder(source, targetFolder, commonSourceDir, {
         const dest = joinPath(targetFolder, destinationFile);
         const destinationPath = resolvePath(dest);
 
-        return copyFileToFile(source, destinationPath, {force, silent, progressBar, dry, hideOverwriteError});
+        return copyFileToFile(source, destinationPath, {force, recursive, silent, progressBar, dry, hideOverwriteError});
     }
     catch (e)
     {
@@ -545,14 +552,17 @@ function copyFileToFolder(source, targetFolder, commonSourceDir, {
  * @param target
  * @param commonSourceDir
  * @param force
+ * @param recursive
  * @param {*} targetStatus
  * @param silent
+ * @param hideOverwriteError
  * @param dry
  * @param {*} progressBar
  * @returns {{success: boolean}|{success: boolean}|{success: boolean, dest}}
  */
 function copySourceToTarget(source, target, commonSourceDir, {
     force = false,
+    recursive = false,
     targetStatus = null,
     silent = false,
     hideOverwriteError = false,
@@ -573,12 +583,13 @@ function copySourceToTarget(source, target, commonSourceDir, {
         // Copying a file to a directory
         if (targetStatus.isFile)
         {
-            return copyFileToFile(source, target, {force, silent, progressBar, dry, hideOverwriteError});
+            return copyFileToFile(source, target, {force, recursive, silent, progressBar, dry, hideOverwriteError});
         }
         else if (targetStatus.isDir)
         {
             return copyFileToFolder(source, target, commonSourceDir, {
                 force,
+                recursive,
                 silent,
                 progressBar,
                 dry,
@@ -602,9 +613,11 @@ function copySourceToTarget(source, target, commonSourceDir, {
  * @param source
  * @param commonSourceDir
  * @param {boolean} force
+ * @param recursive
  * @param left
  * @param silent
  * @param dry
+ * @param hideOverwriteError
  * @param progressBar
  * @param report
  * @returns {{count: number, errorFounds: number}}
@@ -613,6 +626,7 @@ function copyDetailedSourceToTargets(targets, {
     source,
     commonSourceDir,
     force,
+    recursive,
     left = 0,
     silent = false,
     dry = false,
@@ -633,7 +647,7 @@ function copyDetailedSourceToTargets(targets, {
             let targetStatus = getEntityStatus(target);
 
             const result = copySourceToTarget(source, target, commonSourceDir,
-                {force, silent, targetStatus, progressBar, dry, hideOverwriteError});
+                {force, recursive, silent, targetStatus, progressBar, dry, hideOverwriteError});
 
             report.push({...result, source, commonSourceDir});
 
@@ -665,6 +679,7 @@ function copyDetailedSourceToTargets(targets, {
 
 function cloneSources(sources, targets, {
     force = false,
+    recursive = false,
     progress = false,
     silent = false,
     clearProgress = false,
@@ -709,6 +724,7 @@ function cloneSources(sources, targets, {
                     source         : item.filepath,
                     commonSourceDir: item.commonSourceDir,
                     force,
+                    recursive,
                     left           : sources.length - i - 1,
                     silent,
                     dry,
@@ -766,6 +782,7 @@ const cloneFromCLI = (argv) =>
             progress,
             force,
             silent,
+            recursive,
             clearProgress,
             dry,
             list,
@@ -843,6 +860,7 @@ const cloneFromCLI = (argv) =>
         const report = [];
         const {count} = cloneSources(sources, targets, {
             force,
+            recursive,
             progress,
             silent,
             clearProgress,

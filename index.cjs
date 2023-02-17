@@ -24,12 +24,6 @@ const init = async () =>
             argv.force = argv.force || argv.overwrite;
         }
 
-        if (argv.hasOwnProperty("recursive"))
-        {
-            displayLog(`The option "--recursive" is deprecated. Use --force instead`, {fg: "orange"});
-            argv.force = argv.force || argv.recursive;
-        }
-
         // --------------------
         // Version and help
         // --------------------
