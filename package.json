@@ -1,6 +1,6 @@
 {
   "name": "clonefile",
-  "version": "3.8.1",
+  "version": "3.8.4",
   "description": "Clone file into multiple locations",
   "main": "./src/clonefile.cjs",
   "bin": {
@@ -45,7 +45,7 @@
     "@thimpat/libutils": "^1.13.4",
     "@types/node": "^18.11.18",
     "cli-progress": "^3.11.2",
-    "glob": "^8.0.3",
+    "glob": "^11.0.1",
     "minimist": "^1.2.6",
     "pageterm": "^1.0.2",
     "to-ansi": "^1.4.3"

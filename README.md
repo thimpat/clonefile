@@ -282,6 +282,10 @@ $> clonefile --force --source my-file-1 --source path1/my-file-2 --source path1/
 ## Changelog
 
 ##### current:
+*  Fix --recursive option ignored when invoked programmatically
+
+
+##### 3.8.2:
 *  Restore the --recursive option
 
 
